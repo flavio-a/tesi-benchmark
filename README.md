@@ -2,7 +2,15 @@
 Benchmark set per la laurea triennale. Mi piacerebbe misurare sia i tempi di esecuzione che le righe di codice con i vari metodi.
 
 # Confronti
-Il benchmark set viene utilizzato per confrontare vari metodi per parallelismo in Haskell.
+Il benchmark set viene utilizzato per confrontare vari metodi per parallelismo in Haskell. I metodi studiati sono i seguenti:
+- implicito. Sembra interessante FDIP, ma non penso di testarlo (però penso di usare risultati di altri come paragone).
+- data parallelism. Implementato in [Repa](http://repa.ouroborus.net/). Sembrava promettente anche Data Parallel Haskell, ma il progetto [è stato interrotto nel 2010](https://gitlab.haskell.org/ghc/ghc/wikis/data-parallel).
+- con strategie. Implementato nella libreria [Control.Parallel](http://hackage.haskell.org/package/parallel) di Haskell.
+- dataflow. Implementato nella libreria [Control.Monad.Par](http://hackage.haskell.org/package/monad-par) di Haskell.
+
+Altri framework:
+- [Eden](http://www.mathematik.uni-marburg.de/~eden/): parallelismo con thread espliciti, in qualche modo simile alle strategie, ma parallelizza a livello di funzioni invece che di thunk da valutare.
+- [haskell-cnc](http://hackage.haskell.org/package/haskell-cnc): parallelismo dataflow, simile a Control.Monad.Par ma più avanzata.
 
 # Benchmarks
 Elenco dei benchmark, in cui viene spiegato cosa testano e/o perché li ho scelti.
@@ -10,14 +18,16 @@ Elenco dei benchmark, in cui viene spiegato cosa testano e/o perché li ho scelt
 ## Interessanti
 Questi benchmark secondo me coprono quasi tutti i tipi di parallelismo comuni, manca solo un esempio di parallelismo dataflow (possibilmente con grafo dinamico).
 
-- `Queens`: problema delle regine. Paradigma divide-et-impera. Possibile in due versioni: numero di soluzioni (divide-et-impera) o trovare una qualsiasi soluzione (parallelismo speculativo).
+- `Queens`: problema delle regine. Paradigma divide-et-impera. Possibile in due versioni: numero di soluzioni (divide-et-impera) o trovare una qualsiasi soluzione (parallelismo speculativo, inutile se trovo il gate array simulator).
 - `Minimax`: ricerca alpha-beta su un albero per un gioco a due giocatori. Paradigma divide-et-impera con pruning di rami inutili (con lazyness? GC? Esplicito? Immagino dipenderà dal tipo di parallelismo).
 - `Transclos`: calcola tutti gli elementi raggiungibili da un insieme iniziale tramite una relazione data. Calcola in parallelo una lista infinita con data parallelism o producer-consumer.
 - `Matmult`: moltiplicazione di matrici (algoritmo O(N^3) ingenuo). Data parallelism con clustering implicito.
-- `Nbody`: problema degli n corpi, algoritmo di Barnes-Hut. Data parallelism su una struttura non lineare (quadtree).
+- `Nbody`: problema degli n corpi, algoritmo di Barnes-Hut. Nested data parallelism su una struttura non lineare (quadtree).
 - `Coins`: conta il numero di modi per realizzare una certa somma con monete di certi tipi. Paradigma divide-et-impera con soglia (clustering esplicito).
 
 - Uno tra `sphere`, `ray`: raytracing. Usano nested data parallelism. Direi `sphere` perché il codice mi sembra organizzato meglio.
+
+- Un gate array simulator. Si presta bene a parallelismo speculativo e dataflow. `Circsim` in nofib/spectral fa molto più del necessario e probabilmente fa troppo, nel senso che non si riesce a parallelizzare come vorrei.
 
 # Scartati
 Benchmark scartati in quanto già sostituiti (a mio avviso) da altri.

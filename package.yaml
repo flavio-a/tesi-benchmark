@@ -23,28 +23,34 @@ dependencies:
 - base >= 4.7 && < 5
 
 library:
-  source-dirs: src
+  source-dirs:
+    - src
+    - src/queens
+  dependencies:
+    - parallel
+    - monad-par
+    - repa
 
 executables:
   tesi-benchmark-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - tesi-benchmark
+      - tesi-benchmark
 
 tests:
   tesi-benchmark-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - tesi-benchmark
-    - hspec
-    - hspec-discover
+      - tesi-benchmark
+      - hspec
+      - hspec-discover
