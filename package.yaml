@@ -32,7 +32,7 @@ library:
     - repa
 
 executables:
-  tesi-benchmark-exe:
+  tesi-benchmark:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -41,6 +41,7 @@ executables:
       - -with-rtsopts=-N
     dependencies:
       - tesi-benchmark
+      - criterion
 
 tests:
   tesi-benchmark-test:
