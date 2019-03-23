@@ -1,4 +1,4 @@
-module Queens
+module Queens.Queens
     ( bseq
     , brepa
     , bstrat
@@ -76,9 +76,10 @@ bmpar :: Int -> Int
 bmpar nq = length $ runPar $ recmpar 0 []
     where
     recmpar :: Int -> Chessboard -> Par [Chessboard]
-    recmpar n b =
-        if n >= threshold then
-            return $ seqgen nq n b
-        else do
+    recmpar n b
+        | n >= threshold = return $ seqgen nq n b
+        | otherwise      = do
             bs <- parMapM (recmpar (n + 1)) $ gen nq [b]
             return $ concat bs
+            -- Equivalent to:
+            -- liftM concat $ parMapM (recmpar (n + 1)) $ gen nq [b]

@@ -1,12 +1,17 @@
 module Main where
 
 import Criterion.Main
-import Queens
+import Queens.Queens
+
+queens = bgroup "queens - 13"
+    [ bench "seq" $ whnf bseq 13
+    , bench "strat" $ whnf bstrat 13
+    , bench "repa" $ whnf brepa 13
+    , bench "mpar" $ whnf bmpar 13
+    ]
+
 
 main :: IO ()
 main = defaultMain
-    [ bgroup "queens-seq"   [ bench "13" $ whnf bseq 13 ]
-    , bgroup "queens-strat" [ bench "13" $ whnf bstrat 13 ]
-    , bgroup "queens-repa"  [ bench "13" $ whnf brepa 13 ]
-    , bgroup "queens-mpar"  [ bench "13" $ whnf bmpar 13 ]
+    [ queens
     ]

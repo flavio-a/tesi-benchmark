@@ -25,7 +25,6 @@ dependencies:
 library:
   source-dirs:
     - src
-    - src/queens
   dependencies:
     - parallel
     - monad-par
