@@ -1,7 +1,7 @@
 name:                tesi-benchmark
 version:             0.1.0.0
 github:              "flavio-a/tesi-benchmark"
-license:             BSD3
+license:             MIT
 author:              "Flavio"
 maintainer:          "flavio.a.618@gmail.com"
 copyright:           "2019 Flavio"
@@ -29,6 +29,8 @@ library:
     - parallel
     - monad-par
     - repa
+    - random
+    - deepseq
 
 executables:
   tesi-benchmark:

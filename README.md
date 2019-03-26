@@ -4,12 +4,13 @@ Benchmark set per la laurea triennale. Mi piacerebbe misurare sia i tempi di ese
 # Confronti
 Il benchmark set viene utilizzato per confrontare vari metodi per parallelismo in Haskell. I metodi studiati sono i seguenti:
 - implicito. Sembra interessante FDIP, ma non penso di testarlo (però penso di usare risultati di altri come paragone).
-- data parallelism. Implementato in [Repa](http://repa.ouroborus.net/). Sembrava promettente anche Data Parallel Haskell, ma il progetto [è stato interrotto nel 2010](https://gitlab.haskell.org/ghc/ghc/wikis/data-parallel).
+- (flat) data parallelism. Implementato in [Repa](http://repa.ouroborus.net/). Sembrava più interessante Data Parallel Haskell dato che permetteva nested data parallelism, ma il progetto [è stato interrotto nel 2010](https://gitlab.haskell.org/ghc/ghc/wikis/data-parallel).
 - con strategie. Implementato nella libreria [Control.Parallel](http://hackage.haskell.org/package/parallel) di Haskell.
 - dataflow. Implementato nella libreria [Control.Monad.Par](http://hackage.haskell.org/package/monad-par) di Haskell.
 
 Altri framework:
 - [Eden](http://www.mathematik.uni-marburg.de/~eden/): parallelismo con thread espliciti, in qualche modo simile alle strategie, ma parallelizza a livello di funzioni invece che di thunk da valutare.
+- [Accelerate](https://www.acceleratehs.org/get-started.html): flat data parallelism, molto simile a Repa.
 - [haskell-cnc](http://hackage.haskell.org/package/haskell-cnc): parallelismo dataflow, simile a Control.Monad.Par ma più avanzata.
 
 # Benchmarks
