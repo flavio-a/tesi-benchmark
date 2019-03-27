@@ -43,6 +43,7 @@ executables:
     dependencies:
       - tesi-benchmark
       - criterion
+      - deepseq
 
 tests:
   tesi-benchmark-test:

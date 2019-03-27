@@ -22,7 +22,7 @@ Questi benchmark secondo me coprono quasi tutti i tipi di parallelismo comuni, m
 - `Queens`: problema delle regine. Paradigma divide-et-impera. Possibile in due versioni: numero di soluzioni (divide-et-impera) o trovare una qualsiasi soluzione (parallelismo speculativo, inutile se trovo il gate array simulator).
 - `Minimax`: ricerca alpha-beta su un albero per un gioco a due giocatori. Paradigma divide-et-impera con pruning di rami inutili (con lazyness? GC? Esplicito? Immagino dipenderà dal tipo di parallelismo).
 - `Transclos`: calcola tutti gli elementi raggiungibili da un insieme iniziale tramite una relazione data. Calcola in parallelo una lista infinita con data parallelism o producer-consumer.
-- `Matmult`: moltiplicazione di matrici (algoritmo O(N^3) ingenuo). Data parallelism con clustering implicito.
+- `Matmult`: moltiplicazione di matrici (algoritmo O(N^3) ingenuo). Data parallelism con clustering.
 - `Nbody`: problema degli n corpi, algoritmo di Barnes-Hut. Nested data parallelism su una struttura non lineare (quadtree).
 - `Coins`: conta il numero di modi per realizzare una certa somma con monete di certi tipi. Paradigma divide-et-impera con soglia (clustering esplicito).
 

@@ -5,7 +5,7 @@ import Control.Monad
 import Minimax.Minimax
 
 inputs :: [(Int, Int)]
-inputs = [(4, 4)]
+inputs = [(4, 3), (6, 3)]
 
 tests :: [((Int, Int), String)]
 tests = zip inputs $ map (uncurry bseq) inputs
