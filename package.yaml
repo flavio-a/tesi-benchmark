@@ -44,6 +44,7 @@ executables:
       - tesi-benchmark
       - criterion
       - deepseq
+      - repa
 
 tests:
   tesi-benchmark-test:

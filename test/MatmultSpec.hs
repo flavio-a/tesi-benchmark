@@ -6,7 +6,7 @@ import Matmult.Matmult
 
 showMat m = "<<" ++ unlines (map (concatMap (\x -> show x ++ " ")) m) ++ ">>"
 
-m1, m2, m3 :: Matrix
+m1, m2, m3, m13 :: Matrix
 m1 = splitGroup 4 [1..16]
 m2 = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
 m3 = replicate 4 [1..4]
@@ -43,5 +43,5 @@ spec = do
         it "m3 * id" $ bseq m3 m2 `shouldBe` m3
         it "m1 * m3" $ bseq m1 m3 `shouldBe` m13
     describe "strategies" $ testFun $ uncurry bstrat
-    describe "repa" $ testFun $ uncurry brepa
+    describe "repa" $ testFun $ uncurry brepatest
     describe "monad par" $ testFun $ uncurry bmpar

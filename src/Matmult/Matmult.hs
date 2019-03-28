@@ -1,13 +1,20 @@
 {-# LANGUAGE BangPatterns #-}
 
-module Matmult.Matmult where
+module Matmult.Matmult
+    ( bseq
+    , brepa
+    , bstrat
+    , bmpar
+    , brepatest
+    , Matrix
+    , splitGroup
+    ) where
 
 import Data.List
 import Control.DeepSeq
+import Control.Applicative
 import Control.Monad
 import Data.Functor.Identity
-
-import Matmult.ListAux
 
 import Control.Parallel.Strategies
 import Control.Monad.Par
@@ -39,21 +46,6 @@ splitIntoClusters c m1 = mss
         kPartition :: Int -> Int -> [Int]
         kPartition n k = zipWith (+) (replicate (n `mod` k) 1 ++ repeat 0)
                                      (replicate k (n `div` k))
-
-concatClusters :: [[Matrix]] -> Matrix
-concatClusters mss = m
-    where
-        m = concatMap concatLine mss
-        concatLine :: [Matrix] -> [Vector]
-        concatLine ms | null (head ms) = []
-                      | otherwise = concatMap head ms : concatLine (map tail ms)
-
-addMatrices :: Matrix -> Matrix -> Matrix
-addMatrices = zipWith addVectors
-    where
-        addVectors :: Vector -> Vector -> Vector
-        addVectors = zipWith (+)
-
 prodEscalar2 :: Vector -> Vector -> Int
 prodEscalar2 v1 v2 = addProd v1 v2 0
     where
@@ -65,13 +57,6 @@ prodEscalar2 v1 v2 = addProd v1 v2 0
 multMatricesTr :: Matrix -> Matrix -> Matrix
 multMatricesTr m1 m2 = [[prodEscalar2 row col | col <- m2] | row <- m1]
 
-prodEscalar2Block :: [Matrix] -> [Matrix] -> Matrix
-prodEscalar2Block v1 v2 = addProd v1 v2 (repeat $ repeat 0)
-    where
-    addProd :: [Matrix] -> [Matrix] -> Matrix -> Matrix
-    addProd (v:vs) (w:ws) acc = addProd vs ws (addMatrices acc (multMatricesTr v (transpose w)))
-    addProd _ _ n = n
-
 -- ================================ Sequential ================================
 bseq :: Matrix -> Matrix -> Matrix
 bseq m1 m2 = multMatricesTr m1 (transpose m2)
@@ -82,21 +67,17 @@ blockStrat c matrix
     = let blocks = concat (splitIntoClusters numB matrix) -- result splitted
                                                           -- in numB * numB blocks
           numB  = length matrix `div` c
-      in fmap concat $ parList rdeepseq blocks
+      in concat <$> parList rdeepseq blocks
 
 bstrat :: Matrix -> Matrix -> Matrix
 bstrat m1 m2 = multMatricesTr m1 (transpose m2) `using` blockStrat 20
 
 -- ================================ Monad Par ================================
+-- Change clustering: compute each row in parallel
 bmpar :: Matrix -> Matrix -> Matrix
-bmpar m1 m2 = runPar $ do
-    r <- parMapM (\b1s -> Control.Monad.Par.parMap (prodEscalar2Block b1s) m2s) m1s
-    return $ concatClusters r
+bmpar m1 m2 = runPar $ Control.Monad.Par.parMap (\row -> map (prodEscalar2 row) m2') m1
     where
-        numB = 10
-        m1s = splitIntoClusters numB m1
-        m2s = transpose $ splitIntoClusters numB m2
-        -- blocks = [[prodEscalar2Block b1s b2s | b2s <- m2s] | b1s <- m1s]
+        m2' = transpose m2
 
 -- =================================== Repa ===================================
 -- Change clustering: compute each element in parallel
@@ -106,17 +87,25 @@ splitGroup _ [] = []
 splitGroup n xs = h : splitGroup n t
     where (h, t) = splitAt n xs
 
-brepa :: Matrix -> Matrix -> Matrix
-brepa m1 m2 = arr2mat $ runIdentity $ R.computeP r
+-- Wrapper of brepa with the same signature of bseq/etc... to make testing easier
+brepatest :: Matrix -> Matrix -> Matrix
+brepatest m1 m2 = arr2mat $ brepa m1' m2'
     where
         l = length m1
         shll = Z :. l :. l
+        arr2mat :: R.Shape sh => R.Array R.U sh Int -> Matrix
+        arr2mat = splitGroup l . R.toList
         m1' = R.fromListUnboxed shll $ concat m1 :: R.Array R.U DIM2 Int
-        m2' = R.transpose $ R.fromListUnboxed shll $ concat m2 :: R.Array R.D DIM2 Int
-        r = R.fromFunction shll (\(Z :. i :. j) -> getRow i m1' `dotprod` getRow j m2') :: R.Array R.D DIM2 Int
+        m2' = R.fromListUnboxed shll $ concat m2 :: R.Array R.U DIM2 Int
+
+-- The library itself has an implementation of this: Data.Array.Repa.Algorithms.Matrix.mmultP
+brepa :: R.Array R.U DIM2 Int -> R.Array R.U DIM2 Int -> R.Array R.U DIM2 Int
+brepa m1 m2 = runIdentity $ R.computeP r
+    where
+        shll = R.extent m1
+        m2' = R.transpose m2 :: R.Array R.D DIM2 Int
+        r = R.fromFunction shll (\(Z :. i :. j) -> getRow i m1 `dotprod` getRow j m2') :: R.Array R.D DIM2 Int
 
         dotprod v1 v2 = R.sumS (R.zipWith (*) v1 v2) R.! Z
         getRow :: R.Source r a => Int -> R.Array r DIM2 a -> R.Array R.D DIM1 a
         getRow i v = R.slice v (R.Any :. i :. R.All)
-        arr2mat :: R.Shape sh => R.Array R.U sh Int -> Matrix
-        arr2mat = splitGroup l . R.toList

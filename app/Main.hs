@@ -2,6 +2,8 @@ module Main where
 
 import Criterion.Main
 import Control.DeepSeq
+import Data.Array.Repa as R
+
 import Queens.Queens as Queens
 import Minimax.Minimax as Minimax
 import Matmult.Matmult as Matmult
@@ -23,19 +25,20 @@ minimax = bgroup "minimax - 4 4"
 matmult = bgroup (concat ["matmult - ", show dim, "x", show dim])
     [ bench "seq" $ nf (Matmult.bseq m) m
     , bench "strat" $ nf (Matmult.bstrat m) m
-    , bench "repa" $ nf (Matmult.brepa m) m
+    , bench "repa" $ nf (R.toList . Matmult.brepa mrepa) mrepa
     , bench "mpar" $ nf (Matmult.bmpar m) m
     ]
     where
-        dim = 400
-        size = dim^2 `div` 2
-        m' = Matmult.splitGroup dim [(1 - size)..size]
-        m = rnf m' `seq` m'
+        dim = 500
+        m = Matmult.splitGroup dim [-dim .. dim^2 - dim - 1]  :: Matrix
+        -- Repa Arrays are already strict. Using m in it's definition force its
+        -- evaluation too
+        mrepa = R.fromListUnboxed (R.Z R.:. dim R.:. dim) $ concat m :: R.Array R.U DIM2 Int
 
 
 main :: IO ()
 main = defaultMain [
-    -- queens,
-    -- minimax,
+    queens,
+    minimax,
     matmult
     ]
