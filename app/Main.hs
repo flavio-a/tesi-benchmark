@@ -2,11 +2,12 @@ module Main where
 
 import Criterion.Main
 import Control.DeepSeq
-import Data.Array.Repa as R
+import qualified Data.Array.Repa as R
 
 import Queens.Queens as Queens
 import Minimax.Minimax as Minimax
 import Matmult.Matmult as Matmult
+import Coins.Coins as Coins
 
 queens = bgroup "queens - 13"
     [ bench "seq" $ whnf Queens.bseq 13
@@ -25,7 +26,7 @@ minimax = bgroup "minimax - 4 4"
 matmult = bgroup (concat ["matmult - ", show dim, "x", show dim])
     [ bench "seq" $ nf (Matmult.bseq m) m
     , bench "strat" $ nf (Matmult.bstrat m) m
-    , bench "repa" $ nf (R.toList . Matmult.brepa mrepa) mrepa
+    , bench "repa" $ nf (R.toUnboxed . Matmult.brepa mrepa) mrepa
     , bench "mpar" $ nf (Matmult.bmpar m) m
     ]
     where
@@ -33,12 +34,26 @@ matmult = bgroup (concat ["matmult - ", show dim, "x", show dim])
         m = Matmult.splitGroup dim [-dim .. dim^2 - dim - 1]  :: Matrix
         -- Repa Arrays are already strict. Using m in it's definition force its
         -- evaluation too
-        mrepa = R.fromListUnboxed (R.Z R.:. dim R.:. dim) $ concat m :: R.Array R.U DIM2 Int
+        mrepa :: R.Array R.U R.DIM2 Int
+        mrepa = R.fromListUnboxed (R.Z R.:. dim R.:. dim) $ concat m
 
+coins = bgroup ("coins - " ++ show val)
+    [ bench "seq" $ nf (Coins.bseq val) coins
+    , bench "strat" $ nf (Coins.bstrat val) coins
+    , bench "repa" $ nf (Coins.brepa val) coins
+    , bench "mpar" $ nf (Coins.bmpar val) coins
+    ]
+    where
+        vals, quants :: [Int]
+        vals = [250, 100, 25, 10, 5, 1]
+        quants = [55, 88, 88, 99, 122, 177]
+        coins = zip vals quants :: [(Int, Int)]
+        val = 1163 :: Int
 
 main :: IO ()
 main = defaultMain [
     queens,
     minimax,
-    matmult
+    matmult,
+    coins
     ]
