@@ -8,6 +8,8 @@ import Queens.Queens as Queens
 import Minimax.Minimax as Minimax
 import Matmult.Matmult as Matmult
 import Coins.Coins as Coins
+import Transclos.Transclos as Transclos
+import Nbody.Nbody as Nbody
 
 queens = bgroup "queens - 13"
     [ bench "seq" $ whnf Queens.bseq 13
@@ -50,10 +52,35 @@ coins = bgroup ("coins - " ++ show val)
         coins = zip vals quants :: [(Int, Int)]
         val = 1163 :: Int
 
+-- transclos = bgroup ("transclos - " ++ show val)
+--     [ bench "repa" $ nf (Transclos.seq r) seed
+--     , bench "repa" $ nf (Transclos.strat r) seed
+--     , bench "repa" $ nf (Transclos.brepa r) seed
+--     , bench "mpar" $ nf (Transclos.bmpar r) seed
+--     ]
+--     where
+--         r = Transclos.r2 val
+--         -- seed = [1, 192, 200, val - 1] :: [Int]
+--         seed = [1, 2500, 10000] :: [Int]
+--         val = 2500 :: Int
+
+nbody = bgroup ("nbody - " ++ show val)
+    [ bench "seq" $ nf Nbody.bseq val
+    , bench "strat" $ nf Nbody.bstrat val
+    , bench "repa" $ nf (R.toUnboxed . Nbody.brepa) val
+    , bench "mpar" $ nf Nbody.bmpar val
+    ]
+    where
+        val = 10000 :: Int
+        -- initVecs = genInitVecs val
+        -- initVecsRepa = genInitVecsRepa val
+
 main :: IO ()
 main = defaultMain [
-    queens,
-    minimax,
-    matmult,
-    coins
+    -- queens,
+    -- minimax,
+    -- matmult,
+    -- coins,
+    -- transclos
+    nbody
     ]

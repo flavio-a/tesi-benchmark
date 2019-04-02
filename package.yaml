@@ -31,6 +31,7 @@ library:
     - repa
     - random
     - deepseq
+    - array
 
 executables:
   tesi-benchmark:
@@ -58,3 +59,4 @@ tests:
       - tesi-benchmark
       - hspec
       - hspec-discover
+      - HUnit-approx

@@ -21,6 +21,7 @@ import qualified Data.Array.Repa as R
 -- version of N-queens originally from nofib/imaginary/queens, parallelised
 -- by Simon Marlow 03/2010.
 
+-- ================================== Common ==================================
 -- A chessboard is represented as a list of Int, in which the index is the
 -- column and the value is the row of the queen in that column
 type Chessboard = [Int]
@@ -43,11 +44,11 @@ threshold = 3
 seqgen :: Int -> Int -> Chessboard -> [Chessboard]
 seqgen nq n b = iterate (gen nq) [b] !! (nq - n)
 
--- Sequential version, for comparison
+-- ================================ Sequential ================================
 bseq :: Int -> Int
 bseq nq = length $ seqgen nq 0 []
 
--- Repa
+-- =================================== Repa ===================================
 brepa :: Int -> Int
 brepa nq = runIdentity result R.! Z
     where
@@ -61,7 +62,7 @@ brepa nq = runIdentity result R.! Z
     ress = runIdentity $ R.computeP resarr :: R.Array R.U DIM1 Int
     result = R.sumP ress
 
--- Strategies
+-- ================================ Strategies ================================
 bstrat :: Int -> Int
 bstrat nq = length $ pargen 0 []
     where
@@ -71,7 +72,7 @@ bstrat nq = length $ pargen 0 []
       | otherwise      = concat bs
         where bs = map (pargen (n+1)) (gen nq [b]) `using` parList rdeepseq
 
--- Monad par
+-- ================================ Monad Par ================================
 bmpar :: Int -> Int
 bmpar nq = length $ runPar $ recmpar 0 []
     where
