@@ -26,12 +26,12 @@ module Nbody.Nbody
     , brepatest
     , Float3D
     , genInitVecs
-    , genInitVecsRepa
     ) where
 
 import Control.Monad
 import GHC.Conc (numCapabilities)
-import qualified Data.Array as Array
+import qualified Data.Vector.Unboxed as Vector
+import Data.Vector.Unboxed (Vector, (!))
 import Data.Functor.Identity
 
 import Control.Parallel.Strategies
@@ -49,19 +49,6 @@ multTriple :: Float -> Float3D -> Float3D
 {-# INLINE multTriple #-}
 multTriple c ( x,y,z ) = ( c*x,c*y,c*z )
 
-sumTriples :: Float3D -> Float3D -> Float3D
-{-# INLINE sumTriples #-}
-sumTriples (x,y,z) (x',y',z') = (x+x',y+y',z+z')
-
--- Generates one body in the system
-genVector :: Int -> Float3D
-genVector tag = (tag' * 1.0, tag' * 0.2, tag' * 30.0)
-   where tag' = fromIntegral tag
-
--- Generates all bodies in the system
-genInitVecs :: Int -> Array.Array Int Float3D
-genInitVecs n = Array.array (0, n-1) [ (i, genVector i) | i <- [0..n-1] ]
-
 pairWiseAccel :: Float3D -> Float3D -> Float3D
 {-# INLINE pairWiseAccel #-}
 pairWiseAccel (x,y,z) (x',y',z') = multTriple factor (dx,dy,dz)
@@ -72,78 +59,72 @@ pairWiseAccel (x,y,z) (x',y',z') = multTriple factor (dx,dy,dz)
         distanceSq = dx^2 + dy^2 + dz^2 + eps
         factor = 1/sqrt(distanceSq ^ 3)
 
+-- Generates one body in the system
+genVector :: Int -> Float3D
+genVector tag = (tag' * 1.0, tag' * 0.2, tag' * 30.0)
+   where tag' = fromIntegral tag
+
+-- Generates all bodies in the system
+genInitVecs :: Int -> Vector Float3D
+genInitVecs n = Vector.generate n genVector
+
 -- Only doing the O(N^2) part in parallel:
 -- This step computes the accelerations of the bodies.
-compute :: Array.Array Int Float3D -> Int -> Float3D
--- compute vecList tag = accel myvector vecList
---     where
---         myvector = vecList Array.! tag
---         g = 9.8
---
---         -- Making this much less haskell like to avoid allocation:
---         (strt,end) = Array.bounds vecList
---
---         accel :: Float3D -> Array.Array Int Float3D -> Float3D
---         accel vector vecList = multTriple g (sx, sy, sz)
---             where
---                 (# sx, sy, sz #) = loop strt 0 0 0
---                 loop !i !ax !ay !az | i == end = (# ax, ay, az #)
---                                     | otherwise =
---                     let (px, py, pz) = pairWiseAccel vector (vecList Array.! i)
---                     in loop (i+1) (ax+px) (ay+py) (az+pz)
-compute vecList tag = accel myvector vecList
+compute :: Vector Float3D -> Float3D -> Float3D
+compute vecList vec = multTriple g (sx, sy, sz)
     where
-        myvector = vecList Array.! tag
+        myvector = vec
+        g = 9.8
 
-        sumTriples = foldr (\(x,y,z) (x',y',z') -> (x+x',y+y',z+z')) (0,0,0)
-        accel vector vecList = multTriple g $ sumTriples $ map (pairWiseAccel vector) $ Array.elems vecList
+        -- Making this much less haskell like to avoid allocation:
+        end = Vector.length vecList
+
+        (# sx, sy, sz #) = loop 0 0 0 0
+        loop !i !ax !ay !az | i == end = (# ax, ay, az #)
+                            | otherwise =
+            let (px, py, pz) = pairWiseAccel myvector (vecList ! i)
+            in loop (i+1) (ax+px) (ay+py) (az+pz)
+-- compute vecList tag = multTriple g $ sumTriples $ Vector.map (pairWiseAccel myvector) vecList
+--     where
+--         myvector = vecList Vector.! tag
+--         sumTriples = foldr (\(x,y,z) (x',y',z') -> (x+x',y+y',z+z')) (0,0,0)
+
+computeIndexed :: Vector Float3D -> Int -> Float3D
+computeIndexed initVecs i = compute initVecs $ initVecs ! i
 
 -- ================================ Sequential ================================
 bseq :: Int -> [Float3D]
-bseq n = map (compute initVecs) [0..n-1]
+bseq n = map (computeIndexed initVecs) [0..n-1]
     where
-        initVecs = genInitVecs n
+        !initVecs = genInitVecs n
 
 -- ================================ Strategies ================================
 -- Parallel map chunking computations
 bstrat :: Int -> [Float3D]
-bstrat n = map (compute initVecs) [0..n-1] `using` parListChunk chunk rdeepseq
+bstrat n = map (computeIndexed initVecs) [0..n-1] `using` parListChunk chunk rdeepseq
     where
-        initVecs = genInitVecs n
-        -- 10 chunks per Capability
+        !initVecs = genInitVecs n
         chunk = numCapabilities * 10
 
 -- ================================ Monad Par ================================
 -- Parallel map chunking computations
 bmpar :: Int -> [Float3D]
 bmpar n = runPar $ do
-    let initVecs = genInitVecs n
-        chunk = n `quot` (numCapabilities * 5)
-    -- Control.Monad.Par.parMap (compute initVecs) [0..n-1]
-    fs <- forM [0, chunk .. n-1] $ \t -> do
-        let t1 = min (t + chunk - 1) (n - 1)
-        spawnP $ map (compute initVecs) [t .. t1]
+    -- Control.Monad.Par.parMap (computeIndexed initVecs) [0..n-1]
+    fs <- forM [0, chunk .. n-1] (spawnP . compChunk)
     ls <- mapM get fs
     return (concat ls)
+    where
+        !initVecs = genInitVecs n
+        chunk = max 1 $ n `quot` (numCapabilities * 5)
+        compChunk t = map (computeIndexed initVecs) [t .. min (t + chunk - 1) (n - 1)]
 
 -- =================================== Repa ===================================
 -- Parallel Repa operations, with no explicit clustering
-
--- Generates all bodies in the system in a Repa array
-genInitVecsRepa :: Int -> R.Array R.U DIM1 Float3D
-genInitVecsRepa n = R.computeS $ R.map genVector $ R.fromListUnboxed (Z :. n) [0..n-1]
-
 brepa :: Int -> R.Array R.U DIM1 Float3D
-brepa n = runIdentity $ R.computeP $ R.map computeRepa initVecs
+brepa n = runIdentity $ R.computeP $ R.map (compute $ R.toUnboxed initVecs) initVecs
     where
-        initVecs = genInitVecsRepa n
-
-        -- function "compute" modified to work on Repa arrays
-        computeRepa :: Float3D -> Float3D
-        {-# INLINE computeRepa #-}
-        computeRepa vector = multTriple g (R.foldS sumTriples (0, 0, 0) accs R.! Z)
-            where
-                accs = R.map (pairWiseAccel vector) initVecs :: R.Array R.D DIM1 Float3D
+        !initVecs = R.fromUnboxed (Z :. n) $ genInitVecs n
 
 brepatest :: Int -> [Float3D]
 brepatest = R.toList . brepa

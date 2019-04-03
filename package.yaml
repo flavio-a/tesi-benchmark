@@ -31,7 +31,7 @@ library:
     - repa
     - random
     - deepseq
-    - array
+    - vector
 
 executables:
   tesi-benchmark:

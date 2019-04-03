@@ -1,4 +1,3 @@
--- {-# LANGUAGE ImplicitParams #-}
 module NbodySpec (spec) where
 
 import Test.Hspec
@@ -30,4 +29,4 @@ spec = do
     --     it "m1 * id" $ bseq m1 m2 `shouldBe` m1
     describe "strategies" $ testFun bstrat
     describe "repa" $ testFun brepatest
-    -- describe "monad par" $ testFun bmpar
+    describe "monad par" $ testFun bmpar

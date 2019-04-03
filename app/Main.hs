@@ -72,8 +72,6 @@ nbody = bgroup ("nbody - " ++ show val)
     ]
     where
         val = 10000 :: Int
-        -- initVecs = genInitVecs val
-        -- initVecsRepa = genInitVecsRepa val
 
 main :: IO ()
 main = defaultMain [
