@@ -81,6 +81,6 @@ main = defaultMain [
     -- minimax,
     -- matmult,
     -- coins,
-    -- transclos
+    -- transclos,
     nbody
     ]

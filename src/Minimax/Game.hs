@@ -1,5 +1,4 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
+{-# LANGUAGE CPP, DeriveGeneric, DeriveAnyClass #-}
 
 module Minimax.Game
     ( alternateSeq

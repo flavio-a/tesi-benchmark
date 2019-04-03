@@ -10,26 +10,23 @@ import Control.Parallel
 import Control.Parallel.Strategies
 
 -- ================================== Common ==================================
+-- r1, r2, r3 are some relations. Useful for actual executions of transclos
+-- n R m iff m = n + 1 and n < b
 r1 :: Int -> Int -> [Int]
-r1 b n | n<b       = [n+1]  -- n R m iff m = n + 1 and n < b
+r1 b n | n<b       = [n+1]
        | otherwise = []
-
--- r1_set b n = Data.Set.fromList (r1 b n)
 
 -- n R m iff m is an even number less than n and n < b
 r2 :: Int -> Int -> [Int]
 r2 b n | n<b       = [ m | m <- [(n-1),(n-2)..1] , even m ]
        | otherwise = []
 
--- r2_set b n = Data.Set.fromList (r2 b n)
-
 -- n R m iff m is 2*n, 3*n or 5*n. Creates the set of numbers that factorizes
 -- with onyl 2, 3 and 5
 r3 :: Int -> [Int]
 r3 n = map (* n) [2, 3, 5]
 
--- r3_set = Data.Set.fromList . r3
-
+-- Concat a list of lists, then removes duplicates via sorting.
 unionSort :: (Ord a) => [[a]] -> [a]
 unionSort = map head . group . sort . concat
 

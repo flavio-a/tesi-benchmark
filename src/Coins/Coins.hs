@@ -20,9 +20,11 @@ import qualified Data.Array.Repa as R
 bseq :: Int -> [(Int, Int)] -> Int
 bseq = payN
 
+-- Simple algorithm: for each coin value recursively calls itself either picking
+-- a coin with that value (left branch) or not (right)
 payN :: Int -> [(Int,Int)] -> Int
-payN 0   coins     = 1
-payN _   []        = 0
+payN 0 _  = 1
+payN _ [] = 0
 payN val ((c,q):coins)
     | c > val   = payN val coins
     | otherwise = left + right
@@ -36,12 +38,14 @@ payN val ((c,q):coins)
 bstrat :: Int -> [(Int, Int)] -> Int
 bstrat = payNstrat th
     where
-        th = 7
+        th = 7 -- threshold parameter
 
+-- Sparks evalutaion of left branches until it reaches the threshold, then
+-- concludes the exploration sequentially
 payNstrat :: Int -> Int -> [(Int,Int)] -> Int
 payNstrat 0 val coins = payN val coins
-payNstrat _ 0 coins = 1
-payNstrat _ _ []    = 0
+payNstrat _ 0 _  = 1
+payNstrat _ _ [] = 0
 payNstrat th val ((c,q):coins)
     | c > val   = payNstrat th val coins
     | otherwise = left `par` right `pseq` right + left
@@ -53,8 +57,11 @@ payNstrat th val ((c,q):coins)
 
 -- ================================ Monad Par ================================
 bmpar :: Int -> [(Int, Int)] -> Int
-bmpar c coins = runPar $ payNmpar 10 c coins
+bmpar c coins = runPar $ payNmpar th c coins
+    where
+        th = 10 -- threshold parameter
 
+-- Same parallelism as for strategies
 payNmpar :: Int -> Int -> [(Int,Int)] -> Par Int
 payNmpar 0 val coins = return $ payN val coins
 payNmpar _ 0 coins = return 1
@@ -70,17 +77,22 @@ payNmpar th val ((c,q):coins)
         coins' | q == 1    = coins
                | otherwise = (c, q-1) : coins
 
--- -- =================================== Repa ===================================
+-- =================================== Repa ===================================
+-- Sequential + parallelized sequential tails
 brepa :: Int -> [(Int, Int)] -> Int
-brepa val coins = runIdentity result' R.! Z
+brepa val coins = runIdentity result R.! Z
     where
-        states = payNrepa 10 coins (val, 0, 0)
-        states' = R.fromListUnboxed (Z :. length states) states
-        result' = R.sumP $ R.map (payNstate coins) states'
+        states = payNrepa th coins (val, 0, 0) -- List of tail starting points
+        statesR = R.fromListUnboxed (Z :. length states) states
+        result = R.sumP $ R.map (payNstate coins) statesR
+        th = 10 -- threshold
 
+-- Tuples can be unboxed, so it's possible to create a Repa array of tuples
 -- (val, elements dropped in coins, coins of the first type left used)
 type CoinState = (Int, Int, Int)
 
+-- Given the original set of coins and a CoinState computes the actual set of
+-- coins
 actualcoins :: [(Int,Int)] -> CoinState -> [(Int,Int)]
 actualcoins coins (_, idx, q) = rephead q (drop idx coins)
     where
@@ -88,10 +100,13 @@ actualcoins coins (_, idx, q) = rephead q (drop idx coins)
         rephead _ [] = []
         rephead n ((a, q):xs) = (a, q - n):xs
 
+-- Sequential function for evaluation of a tail: from a CoinState returns the
+-- number of ways to pay the remaining value with remaining coins
 payNstate :: [(Int,Int)] -> CoinState -> Int
 payNstate coins cs@(val, _, _) = payN val $ actualcoins coins cs
 
--- computes the set of states after th steps
+-- Computes the set of states after th steps, that are tails' starting points,
+-- then maps in parallel
 payNrepa :: Int -> [(Int,Int)] -> CoinState -> [CoinState]
 payNrepa 0 _ cs = [cs]
 payNrepa _ _ cs@(0, _, _) = [cs]

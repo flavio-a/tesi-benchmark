@@ -1,5 +1,5 @@
 # tesi-benchmark
-Benchmark suite per la laurea triennale. Mi piacerebbe misurare sia i tempi di esecuzione che le righe di codice con i vari metodi.
+Benchmark suite per la laurea triennale. Mi piacerebbe misurare sia i tempi di esecuzione che le righe di codice/impatto linguistico dei vari metodi.
 
 # Confronti
 Il benchmark suite viene utilizzato per confrontare vari metodi per parallelismo in Haskell. I metodi studiati sono i seguenti:
@@ -14,6 +14,21 @@ Altri framework:
 - [Accelerate](https://www.acceleratehs.org/get-started.html): flat data parallelism, molto simile a Repa.
 - [haskell-cnc](http://hackage.haskell.org/package/haskell-cnc): parallelismo dataflow, simile a Control.Monad.Par ma più avanzato.
 
+# Uso
+L'intero progetto è basato su [`stack`](https://docs.haskellstack.org/en/stable/README/), che è la sua unica dipendenza.
+Per eseguire la benchmark suite basta usare
+```
+stack run
+```
+L'esecuzione avviene tramite [`criterion`](http://www.serpentine.com/criterion/); per generare l'output completo in formato html basta eseguire
+```
+stack run -- --output results.html
+```
+È anche possibile verificare che i benchmark della suite calcolino lo stesso risultato con
+```
+stack test
+```
+
 # Benchmarks
 Elenco dei benchmark, in cui viene spiegato cosa testano e/o perché li ho scelti.
 
@@ -25,13 +40,13 @@ Questi benchmark secondo me coprono quasi tutti i tipi di parallelismo comuni, m
 - `Coins`: conta il numero di modi per realizzare una certa somma con monete di certi tipi. Paradigma divide-et-impera con soglia (clustering esplicito).
 - `Minimax`: ricerca alpha-beta su un albero per un gioco a due giocatori. Paradigma divide-et-impera con pruning di rami inutili (con lazyness? GC? Esplicito? Dovrebbe dipendere dal tipo di parallelismo).
 - `Transclos`: calcola tutti gli elementi raggiungibili da un insieme iniziale tramite una relazione data. Calcola in parallelo una lista infinita con data parallelism o producer-consumer.
-- `Nbody`: problema degli n corpi, algoritmo di Barnes-Hut. Nested data parallelism su una struttura non lineare (quadtree).
+- `Nbody`: problema degli n corpi. Flat data parallelism.
 
 - Uno tra `sphere`, `ray`: raytracing. Usano nested data parallelism. Direi `sphere` perché il codice mi sembra organizzato meglio.
 
 - Un gate array simulator. Si presta bene a parallelismo speculativo e dataflow. `Circsim` in nofib/spectral fa molto più del necessario e probabilmente fa troppo, nel senso che non si riesce a parallelizzare come vorrei.
 
-# Scartati
+## Scartati
 Benchmark scartati in quanto già sostituiti (a mio avviso) da altri.
 
 - `Prsa`: parallel RSA encryption. Semplice esempio di data parallelism (parMap).
@@ -51,3 +66,6 @@ Benchmark utilizzati in alcuni articoli ma che non ho trovato, e che ritengo ven
 
 ## Altre note
 Tutti i miei benchmark vengono da [nofib](https://gitlab.haskell.org/ghc/nofib). Ho cercato anche altri benchmark suites, ma tutte le altre trovate (es: haskell-CnC di Intel) contenevano molti benchmark in comune con nofib, e non ho trovato motivi particolari per includere quelli non in comune.
+
+# Crediti
+Tutto il contenuto della cartella `src` è basato su [nofib](https://gitlab.haskell.org/ghc/nofib) se non altrimenti specificato, e i crediti per il contenuto vanno anche agli autori originali.
