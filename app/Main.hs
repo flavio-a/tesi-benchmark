@@ -18,12 +18,15 @@ queens = bgroup "queens - 13"
     , bench "mpar" $ whnf Queens.bmpar 13
     ]
 
-minimax = bgroup "minimax - 4 4"
-    [ bench "seq" $ nf (Minimax.bseq 4) 4
-    , bench "strat" $ nf (Minimax.bstrat 4) 4
-    -- , bench "repa" $ nf Queens.brepa 13
-    , bench "mpar" $ nf (Minimax.bmpar 4) 4
+minimax = bgroup (concat ["minimax - ", show startPieces, " ", show depth])
+    [ bench "seq" $ nf (Minimax.bseq startPieces) depth
+    , bench "strat" $ nf (Minimax.bstrat startPieces) depth
+    , bench "repa" $ nf (Minimax.brepa startPieces) depth
+    , bench "mpar" $ nf (Minimax.bmpar startPieces) depth
     ]
+    where
+        startPieces = 4 :: Int
+        depth = 5 :: Int
 
 matmult = bgroup (concat ["matmult - ", show dim, "x", show dim])
     [ bench "seq" $ nf (Matmult.bseq m) m
@@ -76,9 +79,9 @@ nbody = bgroup ("nbody - " ++ show val)
 main :: IO ()
 main = defaultMain [
     -- queens,
-    -- minimax,
+    minimax
     -- matmult,
     -- coins,
     -- transclos,
-    nbody
+    -- nbody
     ]
