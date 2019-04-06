@@ -10,6 +10,7 @@ import Matmult.Matmult as Matmult
 import Coins.Coins as Coins
 import Transclos.Transclos as Transclos
 import Nbody.Nbody as Nbody
+import Sphere.Sphere as Sphere
 
 queens = bgroup "queens - 13"
     [ bench "seq" $ whnf Queens.bseq 13
@@ -55,17 +56,17 @@ coins = bgroup ("coins - " ++ show val)
         coins = zip vals quants :: [(Int, Int)]
         val = 1163 :: Int
 
--- transclos = bgroup ("transclos - " ++ show val)
---     [ bench "repa" $ nf (Transclos.seq r) seed
---     , bench "repa" $ nf (Transclos.strat r) seed
---     , bench "repa" $ nf (Transclos.brepa r) seed
---     , bench "mpar" $ nf (Transclos.bmpar r) seed
---     ]
---     where
---         r = Transclos.r2 val
---         -- seed = [1, 192, 200, val - 1] :: [Int]
---         seed = [1, 2500, 10000] :: [Int]
---         val = 2500 :: Int
+transclos = bgroup ("transclos - " ++ show val)
+    [ bench "seq" $ nf (Transclos.bseq r (val-1)) seed
+    , bench "strat" $ nf (Transclos.bstrat (Transclos.r1 (val + 10)) (val-1)) seed
+    -- , bench "rel" $ nf (Transclos.r1 100) 40
+    -- , bench "repa" $ nf (Transclos.brepa r) seed
+    -- , bench "mpar" $ nf (Transclos.bmpar r) seed
+    ]
+    where
+        r = Transclos.r1 val
+        seed = [1, 3, 5] :: [Int]
+        val = 42 :: Int
 
 nbody = bgroup ("nbody - " ++ show val)
     [ bench "seq" $ nf Nbody.bseq val
@@ -76,12 +77,22 @@ nbody = bgroup ("nbody - " ++ show val)
     where
         val = 10000 :: Int
 
+sphere = bgroup ("sphere - " ++ show winsize)
+    [ bench "seq" $ nf Sphere.bseq winsize
+    , bench "strat" $ nf Sphere.bstrat winsize
+    , bench "repa" $ nf (R.toUnboxed . Sphere.brepa) winsize
+    , bench "mpar" $ nf Sphere.bmpar winsize
+    ]
+    where
+        winsize = 1500 :: Int
+
 main :: IO ()
 main = defaultMain [
     -- queens,
-    minimax
+    -- minimax,
     -- matmult,
     -- coins,
-    -- transclos,
-    -- nbody
+    -- nbody,
+    sphere
+    -- transclos
     ]

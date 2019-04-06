@@ -39,10 +39,9 @@ Questi benchmark secondo me coprono quasi tutti i tipi di parallelismo comuni, m
 - `Matmult`: moltiplicazione di matrici (algoritmo O(N^3) ingenuo). Data parallelism con clustering.
 - `Coins`: conta il numero di modi per realizzare una certa somma con monete di certi tipi. Paradigma divide-et-impera con soglia (clustering esplicito).
 - `Minimax`: ricerca alpha-beta su un albero per un gioco a due giocatori. Paradigma divide-et-impera con pruning di rami inutili (con lazyness? GC? Esplicito? Dovrebbe dipendere dal tipo di parallelismo).
-- `Transclos`: calcola tutti gli elementi raggiungibili da un insieme iniziale tramite una relazione data. Calcola in parallelo una lista infinita con data parallelism o producer-consumer.
 - `Nbody`: problema degli n corpi. Flat data parallelism.
-
-- Uno tra `sphere`, `ray`: raytracing. Usano nested data parallelism. Direi `sphere` perché il codice mi sembra organizzato meglio.
+- `Sphere`: raytracing. Flat data parallelism.
+- `Transclos`: calcola tutti gli elementi raggiungibili da un insieme iniziale tramite una relazione data. Calcola in parallelo una lista infinita con data parallelism o producer-consumer.
 
 - Un gate array simulator. Si presta bene a parallelismo speculativo e dataflow. `Circsim` in nofib/spectral fa molto più del necessario e probabilmente fa troppo, nel senso che non si riesce a parallelizzare come vorrei.
 

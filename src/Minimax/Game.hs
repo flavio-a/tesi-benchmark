@@ -204,8 +204,7 @@ alternateRepa depth player f g board = move : alternateRepa depth opponent g f b
     parMiseRepa :: Player -> Player -> Tree Evaluation -> Evaluation
     parMiseRepa f g (Branch a []) = a
     parMiseRepa f g (Branch _ l) = evBox . (R.! Z) . runIdentity $
-        R.foldP f' (g' (evUnbox OWin) (evUnbox XWin)) $
+        R.foldP f' (evUnbox $ g OWin XWin) $
         R.fromFunction (Z :. length l) (\(Z :. i) -> evUnbox $ mise g f (l !! i))
         where
             f' a b = evUnbox $ f (evBox a) (evBox b)
-            g' a b = evUnbox $ g (evBox a) (evBox b)
