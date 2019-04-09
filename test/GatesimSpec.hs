@@ -29,5 +29,5 @@ spec :: Spec
 spec = do
     describe "seq" $ testSeq (`bseq` 0)
     describe "strategies" $ testFun (`bstrat` 0)
-    describe "repa" $ testFun (`brepa` 0)
+    -- describe "repa" $ testFun (`brepa` 0)
     describe "monad par" $ testFun (`bmpar` 0)

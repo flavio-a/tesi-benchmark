@@ -90,7 +90,7 @@ sphere = bgroup ("sphere - " ++ show winsize)
 gatesim = bgroup ("gatesim - " ++ show num ++ "E" ++ show e)
     [ bench "seq" $ nf (Gatesim.bseq gates) 0
     , bench "strat" $ nf (Gatesim.bstrat gates) 0
-    -- , bench "repa" $ nf (Gatesim.brepa gates) 0
+    -- , bench "repa" $ nf (Gatesim.brepa gatesrepa) 0
     , bench "mpar" $ nf (Gatesim.bmpar gates) 0
     ]
     where
@@ -101,6 +101,7 @@ gatesim = bgroup ("gatesim - " ++ show num ++ "E" ++ show e)
         sleeps = map Sleep [0 .. num - 1]
         sums = take (num - 1) $ zipWith Sum [num, num + 2..] [num + 1, num + 3..]
         gates = fromList $ input ++ sleeps ++ sums
+        -- gatesrepa = vectorToRepa gates
 
 main :: IO ()
 main = defaultMain [
