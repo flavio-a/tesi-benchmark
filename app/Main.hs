@@ -107,10 +107,10 @@ main :: IO ()
 main = defaultMain [
     -- queens,
     -- minimax,
-    -- matmult,
+    matmult
     -- coins,
     -- nbody,
     -- sphere,
-    gatesim
+    -- gatesim,
     -- transclos
     ]

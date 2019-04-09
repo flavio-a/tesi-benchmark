@@ -7,7 +7,6 @@ module Queens.Queens
 
 import Control.Monad
 import Data.Functor.Identity
-import System.Environment
 
 import Control.Parallel
 import Control.Parallel.Strategies

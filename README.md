@@ -55,7 +55,7 @@ Benchmark scartati in quanto già sostituiti (a mio avviso) da altri.
 - `Parfact`: calcolo del fattoriale. Clustering esplicito, divide-et-impera.
 - `Sumeuler`: somma delle phi di Eulero di una lista di numeri. Nested data parallelism.
 - `Hidden`: rimuove linee nascoste in un rendering 3D. Data parallelism.
--  `Gray`: per il parallelismo è come `ray` e `sphere`, ma il programma è molto più complesso (utile in casi reali ma non per il benchmark).
+- `Gray`: per il parallelismo è come `ray` e `sphere`, ma il programma è molto più complesso (utile in casi reali ma non per il benchmark).
 
 ## Non trovati
 Benchmark utilizzati in alcuni articoli ma che non ho trovato, e che ritengo vengano adeguatamente sostituiti da altri.

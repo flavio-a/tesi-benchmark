@@ -10,17 +10,23 @@ import Control.Parallel
 import Control.Parallel.Strategies
 
 -- ================================== Common ==================================
+-- Compose a function with itself n times. I worked a lot to make this
+-- truly sequential because the runtime often ran it in parallel (on two cores)
+compn :: Int -> (a -> a) -> a -> a
+compn n f a | n <= 0    = a
+            | otherwise = fa `seq` compn (n-1) f fa
+                where
+                    fa = f a
+
+sleep :: Int -> Int
+sleep !n = compn n (+1) 0
+
 -- Given that for parallelism to be useful a relation should be expensive this
 -- relation is "weighted" with some useless computation.
 -- n R m iff m = n + 1 and n < b
 r1 :: Int -> Int -> [Int]
-r1 b n | n < b     = fib fibarg `seq` [n+1]
-       | otherwise = fib fibarg `seq` []
-    where
-        fibarg = min 40 (max 39 n)
-        fib 0 = 0
-        fib 1 = 1
-        fib n = fib (n-1) + fib (n-2)
+r1 b n | n < b     = sleep n `seq` [n+1]
+       | otherwise = sleep b `seq` []
 
 -- Concat a list of lists, then removes duplicates via sorting.
 unionSort :: (Ord a) => [[a]] -> [a]

@@ -34,7 +34,8 @@ import Data.Functor.Identity
 A gate has some inputs and one output. Inputs are denoted by integers, that are
 indexes in the array of other gates whose output is connected to that input.
 -}
-data Gate = Input Int | Sum Int Int | Prod Int Int | Exp Int Int | Sleep Int
+type Idx = Int
+data Gate = Input Int | Sum Idx Idx | Prod Idx Idx | Exp Idx Idx | Sleep Idx
     -- deriving (Show,Generic,NFData)
 
 -- Product "lazy" in its first argument, ie. doesn't evaluate the second if the
@@ -70,7 +71,7 @@ type GateArray = Vector Gate
 -------------------------------------------------------------------------------
 -- Some utility functions to build gate arrays
 
--- Input builder: takes a list of 0/1 and maps it to a list of input gates
+-- Input builder: takes a list of integers and maps it to a list of input gates
 toInput :: [Int] -> [Gate]
 toInput = map Input
 
@@ -81,7 +82,7 @@ getResult :: Int -> [Gate] -> [Int]
 getResult n = reverse . take n . reverse . Vector.toList . evalArray . Vector.fromList
 
 -- ================================ Sequential ================================
-bseq :: GateArray -> Int -> Int
+bseq :: GateArray -> Idx -> Int
 bseq ga n = evalArray ga ! (length ga - n - 1)
 
 -- Compute the value of each gate in the array. Useful becaus introduces
@@ -92,7 +93,7 @@ evalArray ga = res
         res = Vector.map (evalGate res) ga
 
 -- ================================ Strategies ================================
-bstrat :: GateArray -> Int -> Int
+bstrat :: GateArray -> Idx -> Int
 bstrat ga n = evalArrayStrat2 ga ! (length ga - n - 1)
 
 -- Compute in parallel using strategies: each time a gate has two inputs spark
@@ -126,9 +127,9 @@ evalArrayStrat3 ga = res `using` parTraversable rseq
         res = Vector.map (evalGate res) ga
 
 -- ================================ Monad Par ================================
-bmpar :: GateArray -> Int -> Int
 -- Much better parallelism but always evaluates the whole array, even though
 -- some gates may be unneeded.
+bmpar :: GateArray -> Idx -> Int
 bmpar ga n = runPar $ do
     ivars' <- replicateM (Vector.length ga) new
     let ivars = Vector.fromList ivars'
@@ -160,7 +161,7 @@ evalGateMpar res (iv, Exp i j) = liftM2 (^) (get (res ! i)) (get (res ! j)) >>= 
 -- gateBox (4, i, j) = Exp i j
 --
 -- -- Parallel map, more or less the same as strategies #2
--- brepa :: R.Array R.U DIM1 GateUnbox -> Int -> Int
+-- brepa :: R.Array R.U DIM1 GateUnbox -> Idx -> Int
 -- brepa ga n = evalArrayRepa ga R.! (Z :. lenga - n - 1)
 --     where
 --         lenga = case R.extent ga of

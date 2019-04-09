@@ -60,9 +60,10 @@ multMatricesTr :: Matrix -> Matrix -> Matrix
 multMatricesTr m1 m2 = [[prodEscalar2 row col | col <- m2] | row <- m1]
 
 -- ================================ Sequential ================================
--- TODO: make this strict
+-- Using the strategy only to make computation strict (no parallelism
+-- is introduced)
 bseq :: Matrix -> Matrix -> Matrix
-bseq m1 m2 = multMatricesTr m1 (transpose m2)
+bseq m1 m2 = multMatricesTr m1 (transpose m2) `using` rdeepseq
 
 -- ================================ Strategies ================================
 -- Clustering in blocks. Better performances than rows/colums clustering
@@ -76,9 +77,10 @@ bstrat :: Matrix -> Matrix -> Matrix
 bstrat m1 m2 = multMatricesTr m1 (transpose m2) `using` blockStrat 20
 
 -- ================================ Monad Par ================================
--- Different clustering, in rows. Again, better performances
+-- Different clustering, in rows. Again, better performances. Again, strategies
+-- used only to introduce strictness (doesn't really change performances).
 bmpar :: Matrix -> Matrix -> Matrix
-bmpar m1 m2 = runPar $ Control.Monad.Par.parMap (\row -> map (prodEscalar2 row) m2') m1
+bmpar m1 m2 = runPar $ Control.Monad.Par.parMap (\row -> map (prodEscalar2 row) m2' `using` rdeepseq) m1
     where
         m2' = transpose m2
 

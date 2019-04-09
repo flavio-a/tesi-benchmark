@@ -2,3 +2,6 @@
 tesi-benchmark.cabal
 *~
 *.html
+*.bmp
+*.png
+*.no
