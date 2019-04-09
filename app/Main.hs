@@ -11,6 +11,7 @@ import Coins.Coins as Coins
 import Transclos.Transclos as Transclos
 import Nbody.Nbody as Nbody
 import Sphere.Sphere as Sphere
+import Gatesim.Gatesim as Gatesim
 
 queens = bgroup "queens - 13"
     [ bench "seq" $ whnf Queens.bseq 13
@@ -86,6 +87,21 @@ sphere = bgroup ("sphere - " ++ show winsize)
     where
         winsize = 1500 :: Int
 
+gatesim = bgroup ("gatesim - " ++ show num ++ "E" ++ show e)
+    [ bench "seq" $ nf (Gatesim.bseq gates) 0
+    , bench "strat" $ nf (Gatesim.bstrat gates) 0
+    -- , bench "repa" $ nf (Gatesim.brepa gates) 0
+    , bench "mpar" $ nf (Gatesim.bmpar gates) 0
+    ]
+    where
+        num = 32 :: Int
+        e = 7 :: Int
+        eval = 10 ^ e
+        input = toInput [eval .. eval + num - 1]
+        sleeps = map Sleep [0 .. num - 1]
+        sums = take (num - 1) $ zipWith Sum [num, num + 2..] [num + 1, num + 3..]
+        gates = fromList $ input ++ sleeps ++ sums
+
 main :: IO ()
 main = defaultMain [
     -- queens,
@@ -93,6 +109,7 @@ main = defaultMain [
     -- matmult,
     -- coins,
     -- nbody,
-    sphere
+    -- sphere,
+    gatesim
     -- transclos
     ]
