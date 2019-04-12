@@ -1,6 +1,8 @@
 {-
 Based on the idea of a gate array simulator but changed to make each gate a lot
 more (computationally) expensive. Each gate is an Int^n -> Int function.
+
+Not based on any of the nofib benchmarks.
 -}
 -- {-# LANGUAGE DeriveAnyClass, DeriveGeneric #-}
 -- {-# LANGUAGE FlexibleContexts #-}
@@ -25,9 +27,9 @@ import Data.Vector ((!), Vector)
 import Control.Parallel
 import Control.Parallel.Strategies
 import Control.Monad.Par
-import Data.Array.Repa.Index
-import qualified Data.Array.Repa as R
-import Data.Functor.Identity
+-- import Data.Array.Repa.Index
+-- import qualified Data.Array.Repa as R
+-- import Data.Functor.Identity
 
 -- ================================== Common ==================================
 {-
@@ -45,17 +47,18 @@ data Gate = Input Int | Sum Idx Idx | Prod Idx Idx | Exp Idx Idx | Sleep Idx
     0 -> 0
     _ -> a * b
 
--- Compose a function with itself n times. I worked a lot to make this
--- truly sequential because the runtime often ran it in parallel (on two cores)
-compn :: Int -> (a -> a) -> a -> a
-compn n f a | n <= 0    = a
-            | otherwise = fa `seq` compn (n-1) f fa
-                where
-                    fa = f a
-
+-- Sleep is the identity, but requires a computation proportional to the input
 sleep :: Int -> Int
 sleep !n = compn n (+1) 0
+    where
+        -- Compose a function with itself n times.
+        compn :: Int -> (a -> a) -> a -> a
+        compn n f a | n <= 0    = a
+                    | otherwise = fa `seq` compn (n-1) f fa
+                        where
+                            fa = f a
 
+-- Evaluates a gate in some vector of results (from which it takes inputs)
 evalGate :: Vector Int -> Gate -> Int
 evalGate res (Input n) = n
 evalGate res (Sleep i) = sleep (res ! i)
@@ -69,15 +72,17 @@ A gate array is an array of gates.
 type GateArray = Vector Gate
 
 -------------------------------------------------------------------------------
--- Some utility functions to build gate arrays
+-- Some utility functions
 
 -- Input builder: takes a list of integers and maps it to a list of input gates
 toInput :: [Int] -> [Gate]
 toInput = map Input
 
+-- Useful to avoid importing Data.Vector to use this function
 fromList :: [Gate] -> GateArray
 fromList = Vector.fromList
 
+-- Used in debugging
 getResult :: Int -> [Gate] -> [Int]
 getResult n = reverse . take n . reverse . Vector.toList . evalArray . Vector.fromList
 
@@ -144,6 +149,11 @@ evalGateMpar res (iv, Prod i j) = liftM2 (-*) (get (res ! i)) (get (res ! j)) >>
 evalGateMpar res (iv, Exp i j) = liftM2 (^) (get (res ! i)) (get (res ! j)) >>= put iv
 
 -- =================================== Repa ===================================
+{-
+I wans't able to write a parallel version of this using Repa. Maybe it's
+possible, but I strongly doubt it because Repa wasn't thought to do such an
+irregular parallelism.
+-}
 -- type GateUnbox = (Int, Int, Int)
 --
 -- gateUnbox :: Gate -> GateUnbox

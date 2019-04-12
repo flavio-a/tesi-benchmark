@@ -33,7 +33,7 @@ stack test
 Elenco dei benchmark, in cui viene spiegato cosa testano e/o perché li ho scelti.
 
 ## Interessanti
-Questi benchmark secondo me coprono quasi tutti i tipi di parallelismo comuni, manca solo un esempio di parallelismo dataflow (possibilmente con grafo dinamico).
+Questi benchmark secondo me coprono quasi tutti i tipi di parallelismo comuni.
 
 - `Queens`: problema delle regine. Paradigma divide-et-impera.
 - `Matmult`: moltiplicazione di matrici (algoritmo O(N^3) ingenuo). Data parallelism con clustering.
@@ -41,9 +41,8 @@ Questi benchmark secondo me coprono quasi tutti i tipi di parallelismo comuni, m
 - `Minimax`: ricerca alpha-beta su un albero per un gioco a due giocatori. Paradigma divide-et-impera con pruning di rami inutili (con lazyness? GC? Esplicito? Dovrebbe dipendere dal tipo di parallelismo).
 - `Nbody`: problema degli n corpi. Flat data parallelism.
 - `Sphere`: raytracing. Flat data parallelism.
-- `Transclos`: calcola tutti gli elementi raggiungibili da un insieme iniziale tramite una relazione data. Calcola in parallelo una lista infinita con data parallelism o producer-consumer.
-
-- Un gate array simulator. Si presta bene a parallelismo speculativo e dataflow. `Circsim` in nofib/spectral fa molto più del necessario e probabilmente fa troppo, nel senso che non si riesce a parallelizzare come vorrei.
+- `Transclos`: calcola tutti gli elementi raggiungibili da un insieme iniziale tramite una relazione data. Calcola in parallelo una lista infinita con parBuffer (strategies) o data parallelism. Non adatto a producer-consumer perché il consumatore è anche produttore.
+- `Gatesim`: gate array simulator in versione aritmetica: i gate eseguono operazioni aritmetiche elementari su interi. Esempio di parallelismo dataflow.
 
 ## Scartati
 Benchmark scartati in quanto già sostituiti (a mio avviso) da altri.
@@ -55,7 +54,8 @@ Benchmark scartati in quanto già sostituiti (a mio avviso) da altri.
 - `Parfact`: calcolo del fattoriale. Clustering esplicito, divide-et-impera.
 - `Sumeuler`: somma delle phi di Eulero di una lista di numeri. Nested data parallelism.
 - `Hidden`: rimuove linee nascoste in un rendering 3D. Data parallelism.
-- `Gray`: per il parallelismo è come `ray` e `sphere`, ma il programma è molto più complesso (utile in casi reali ma non per il benchmark).
+- `Gray` e `ray`: per il parallelismo sono come `sphere`, ma il programma è molto più complesso (utile in casi reali ma non per il benchmark).
+- `Circsim`: versione realistica di gate array simulator. Fa molto più del necessario e probabilmente fa troppo, nel senso che non si riesce a parallelizzare bene come `gatesim`.
 
 ## Non trovati
 Benchmark utilizzati in alcuni articoli ma che non ho trovato, e che ritengo vengano adeguatamente sostituiti da altri.
@@ -64,7 +64,7 @@ Benchmark utilizzati in alcuni articoli ma che non ho trovato, e che ritengo ven
 - `Maze`: esplorazione di un labirinto 2D. Parallelismo speculativo.
 
 ## Altre note
-Tutti i miei benchmark vengono da [nofib](https://gitlab.haskell.org/ghc/nofib). Ho cercato anche altri benchmark suites, ma tutte le altre trovate (es: haskell-CnC di Intel) contenevano molti benchmark in comune con nofib, e non ho trovato motivi particolari per includere quelli non in comune.
+Tutti i miei benchmark vengono da [nofib](https://gitlab.haskell.org/ghc/nofib) tranne `gatesim`, sviluppato da me. Ho cercato anche altri benchmark suites, ma tutte le altre trovate (es: haskell-CnC di Intel) contenevano molti benchmark in comune con nofib, e non ho trovato motivi particolari per includere quelli non in comune.
 
 # Crediti
 Tutto il contenuto della cartella `src` è basato su [nofib](https://gitlab.haskell.org/ghc/nofib) se non altrimenti specificato, e i crediti per il contenuto vanno anche agli autori originali.

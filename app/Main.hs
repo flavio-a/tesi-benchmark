@@ -58,16 +58,16 @@ coins = bgroup ("coins - " ++ show val)
         val = 1163 :: Int
 
 transclos = bgroup ("transclos - " ++ show val)
-    [ bench "seq" $ nf (Transclos.bseq r (val-1)) seed
-    , bench "strat" $ nf (Transclos.bstrat (Transclos.r1 (val + 10)) (val-1)) seed
-    -- , bench "rel" $ nf (Transclos.r1 100) 40
-    -- , bench "repa" $ nf (Transclos.brepa r) seed
-    -- , bench "mpar" $ nf (Transclos.bmpar r) seed
+    [ bench "seq" $ nf (Transclos.bseq r val) seed
+    , bench "strat" $ nf (Transclos.bstrat r val) seed
+    -- , bench "repa" $ nf (Transclos.brepa r val) seed
+    , bench "mpar" $ nf (Transclos.bmpar r val) seed
     ]
     where
-        r = Transclos.r1 val
-        seed = [1, 3, 5] :: [Int]
-        val = 42 :: Int
+        base = 2 * 10^6 :: Int
+        val = base + 25 :: Int
+        seed = map (*(base `div` 100)) [100 .. 109] :: [Int]
+        r = Transclos.r2
 
 nbody = bgroup ("nbody - " ++ show val)
     [ bench "seq" $ nf Nbody.bseq val
@@ -107,10 +107,10 @@ main :: IO ()
 main = defaultMain [
     -- queens,
     -- minimax,
-    matmult
+    -- matmult,
     -- coins,
     -- nbody,
     -- sphere,
     -- gatesim,
-    -- transclos
+    transclos
     ]
