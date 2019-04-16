@@ -94,7 +94,7 @@ gatesim = bgroup ("gatesim - " ++ show num ++ "E" ++ show e)
     , bench "mpar" $ nf (Gatesim.bmpar gates) 0
     ]
     where
-        num = 32 :: Int
+        num = 48 :: Int
         e = 7 :: Int
         eval = 10 ^ e
         input = toInput [eval .. eval + num - 1]
@@ -105,12 +105,12 @@ gatesim = bgroup ("gatesim - " ++ show num ++ "E" ++ show e)
 
 main :: IO ()
 main = defaultMain [
-    -- queens,
-    -- minimax,
-    -- matmult,
-    -- coins,
-    -- nbody,
-    -- sphere,
-    -- gatesim,
+    queens,
+    minimax,
+    matmult,
+    coins,
+    nbody,
+    sphere,
+    gatesim,
     transclos
     ]

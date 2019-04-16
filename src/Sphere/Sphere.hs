@@ -410,11 +410,11 @@ bmpar winsize = runPar $ do
 
 -- =================================== Repa ===================================
 brepa :: Int -> R.Array R.U DIM2 Vector
-brepa winsize = runIdentity $ R.computeP $ R.fromFunction (Z :. winsize :. winsize) (\(Z :. i :. j) -> f i j)
+brepa winsize = runIdentity $ R.computeP $ R.fromFunction (Z :. winsize :. winsize) f
     where
         (firstray, scrnx, scrny) = camparams lookfrom lookat vup fov (fromIntegral winsize)
-        f :: Int -> Int -> Vector
-        f i j = tracepixel world testlights (fromIntegral i) (fromIntegral j) firstray scrnx scrny
+        f :: DIM2 -> Vector
+        f (Z :. i :. j) = tracepixel world testlights (fromIntegral i) (fromIntegral j) firstray scrnx scrny
 
 brepatest :: Int -> [[Vector]]
 brepatest n = splitGroup n $ R.toList $ brepa n

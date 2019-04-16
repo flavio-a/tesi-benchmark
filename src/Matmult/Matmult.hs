@@ -20,6 +20,7 @@ import Control.Parallel.Strategies
 import Control.Monad.Par
 import Data.Array.Repa.Index
 import qualified Data.Array.Repa as R
+import qualified Data.Array.Repa.Unsafe as R
 
 -- ================================== Common ==================================
 type Vector = [Int]
@@ -111,6 +112,6 @@ brepa m1 m2 = runIdentity $ R.computeP r
         m2' = R.transpose m2 :: R.Array R.D DIM2 Int
         r = R.fromFunction shll (\(Z :. i :. j) -> getRow i m1 `dotprod` getRow j m2') :: R.Array R.D DIM2 Int
 
-        dotprod v1 v2 = R.sumS (R.zipWith (*) v1 v2) R.! Z
+        dotprod v1 v2 = R.sumAllS $ R.zipWith (*) v1 v2
         getRow :: R.Source r a => Int -> R.Array r DIM2 a -> R.Array R.D DIM1 a
-        getRow i v = R.slice v (R.Any :. i :. R.All)
+        getRow i v = R.unsafeSlice v (R.Any :. i :. R.All)

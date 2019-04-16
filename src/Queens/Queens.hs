@@ -61,9 +61,9 @@ bstrat nq = length $ pargen 0 []
     where
     pargen :: Int -> Chessboard -> [Chessboard]
     pargen n b
-      | n >= threshold = seqgen nq n b
-      | otherwise      = concat bs
-        where bs = map (pargen (n+1)) (gen nq [b]) `using` parList rdeepseq
+        | n >= threshold = seqgen nq n b
+        | otherwise      = concat bs
+            where bs = map (pargen (n+1)) (gen nq [b]) `using` parList rdeepseq
     threshold = 4
 
 -- ================================ Monad Par ================================
@@ -93,7 +93,7 @@ element of this array is a tail, and is sequential (because seqgen is). All
 these sequential tails are then evaluated in parallel via computeP.
 -}
 brepa :: Int -> Int
-brepa nq = runIdentity result R.! Z
+brepa nq = runIdentity result
     where
     threshold = 3
     lengen :: [Int] -> Int
@@ -102,4 +102,4 @@ brepa nq = runIdentity result R.! Z
     seqcbs = seqgen nq (nq - threshold) [] :: [Chessboard]
     -- Maps in parallel lengen
     resarr = R.fromFunction (Z :. length seqcbs) (\(Z :. i) -> lengen $ seqcbs !! i) :: R.Array R.D DIM1 Int
-    result = R.sumP resarr :: Identity (R.Array R.U DIM0 Int)
+    result = R.sumAllP resarr :: Identity Int
