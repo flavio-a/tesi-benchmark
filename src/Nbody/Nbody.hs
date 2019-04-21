@@ -17,7 +17,7 @@
  -
  - Original author: Chih-Ping Chen
  -}
-{-# LANGUAGE CPP, UnboxedTuples, BangPatterns, FlexibleContexts #-}
+{-# LANGUAGE CPP, UnboxedTuples, BangPatterns #-}
 module Nbody.Nbody
     ( bseq
     , bstrat
@@ -45,13 +45,17 @@ g = 9.8 :: Float
 
 type Float3D = (Float, Float, Float)
 
-multTriple :: Float -> Float3D -> Float3D
-{-# INLINE multTriple #-}
-multTriple c ( x,y,z ) = ( c*x,c*y,c*z )
+scalprod :: Float -> Float3D -> Float3D
+{-# INLINE scalprod #-}
+scalprod c (x, y, z) = (c * x, c * y, c * z)
+
+vecadd :: Float3D -> Float3D -> Float3D
+{-# INLINE vecadd #-}
+vecadd (x, y, z) (x', y', z') = (x + x', y + y', z + z')
 
 pairWiseAccel :: Float3D -> Float3D -> Float3D
 {-# INLINE pairWiseAccel #-}
-pairWiseAccel (x,y,z) (x',y',z') = multTriple factor (dx,dy,dz)
+pairWiseAccel (x,y,z) (x',y',z') = scalprod factor (dx,dy,dz)
     where
         dx = x' - x
         dy = y' - y
@@ -71,23 +75,20 @@ genInitVecs n = Vector.generate n genVector
 -- Only doing the O(N^2) part in parallel:
 -- This step computes the accelerations of the bodies.
 compute :: Vector Float3D -> Float3D -> Float3D
-compute vecList vec = multTriple g (sx, sy, sz)
+{-# INLINE compute #-}
+compute !vecList vec = scalprod g (sx, sy, sz)
     where
-        myvector = vec
-        g = 9.8
-
         -- Making this much less haskell like to avoid allocation:
         end = Vector.length vecList
 
         (# sx, sy, sz #) = loop 0 0 0 0
         loop !i !ax !ay !az | i == end = (# ax, ay, az #)
                             | otherwise =
-            let (px, py, pz) = pairWiseAccel myvector (vecList ! i)
+            let (px, py, pz) = pairWiseAccel vec (vecList ! i)
             in loop (i+1) (ax+px) (ay+py) (az+pz)
--- compute vecList tag = multTriple g $ sumTriples $ Vector.map (pairWiseAccel myvector) vecList
+-- compute vecList vec = scalprod g $ sumTriples $ Vector.map (pairWiseAccel vec) vecList
 --     where
---         myvector = vecList Vector.! tag
---         sumTriples = foldr (\(x,y,z) (x',y',z') -> (x+x',y+y',z+z')) (0,0,0)
+--         sumTriples = foldl' vecadd (0,0,0)
 
 computeIndexed :: Vector Float3D -> Int -> Float3D
 computeIndexed initVecs i = compute initVecs $ initVecs ! i
@@ -122,9 +123,22 @@ bmpar n = runPar $ do
 -- =================================== Repa ===================================
 -- Parallel Repa operations, with no explicit clustering
 brepa :: Int -> R.Array R.U DIM1 Float3D
-brepa n = runIdentity $ R.computeP $ R.map (compute $ R.toUnboxed initVecs) initVecs
+brepa n = initVecs `R.deepSeqArray` runIdentity $ R.computeP $ R.map calc initVecs
     where
-        !initVecs = R.fromUnboxed (Z :. n) $ genInitVecs n
+        initVecs = R.fromUnboxed (Z :. n) $ genInitVecs n :: R.Array R.U DIM1 Float3D
+        calc :: Float3D -> Float3D
+        {-# INLINE calc #-}
+        calc = compute (R.toUnboxed initVecs)
+
+        -- Slower
+        -- calc = computeRepa initVecs
+        computeRepa :: R.Array R.U DIM1 Float3D -> Float3D -> Float3D
+        {-# INLINE computeRepa #-}
+        computeRepa !vecList !vec = scalprod g $ sumTriples $
+                                R.computeS $ R.map (pairWiseAccel vec) vecList
+        sumTriples :: R.Array R.U DIM1 Float3D -> Float3D
+        {-# INLINE sumTriples #-}
+        sumTriples = (R.! Z) . R.foldS vecadd (0, 0, 0)
 
 brepatest :: Int -> [Float3D]
 brepatest = R.toList . brepa

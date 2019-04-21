@@ -7,6 +7,7 @@ import qualified Data.Array.Repa as R
 import Queens.Queens as Queens
 import Minimax.Minimax as Minimax
 import Matmult.Matmult as Matmult
+import Matmult.MatmultV as MatmultV
 import Coins.Coins as Coins
 import Transclos.Transclos as Transclos
 import Nbody.Nbody as Nbody
@@ -38,11 +39,21 @@ matmult = bgroup (concat ["matmult - ", show dim, "x", show dim])
     ]
     where
         dim = 500
-        m = Matmult.splitGroup dim [-dim .. dim^2 - dim - 1]  :: Matrix
-        -- Repa Arrays are already strict. Using m in it's definition force its
-        -- evaluation too
+        m = Matmult.splitGroup dim [-dim .. dim^2 - dim - 1]  :: Matmult.Matrix
         mrepa :: R.Array R.U R.DIM2 Int
         mrepa = R.fromListUnboxed (R.Z R.:. dim R.:. dim) $ concat m
+
+matmultV = bgroup (concat ["matmultV - ", show dim, "x", show dim])
+    [ bench "seq" $ nf (MatmultV.bseq m) m
+    , bench "strat" $ nf (MatmultV.bstrat m) m
+    , bench "repa" $ nf (R.toUnboxed . MatmultV.brepa mrepa) mrepa
+    , bench "mpar" $ nf (MatmultV.bmpar m) m
+    ]
+    where
+        dim = 700
+        m = MatmultV.splitGroupV dim [-dim .. dim^2 - dim - 1]  :: MatrixV
+        mrepa :: R.Array R.U R.DIM2 Int
+        mrepa = R.fromUnboxed (R.Z R.:. dim R.:. dim) $ MatmultV.concatV m
 
 coins = bgroup ("coins - " ++ show val)
     [ bench "seq" $ nf (Coins.bseq val) coins
@@ -105,12 +116,13 @@ gatesim = bgroup ("gatesim - " ++ show num ++ "E" ++ show e)
 
 main :: IO ()
 main = defaultMain [
-    queens,
-    minimax,
-    matmult,
-    coins,
-    nbody,
-    sphere,
-    gatesim,
-    transclos
+    -- queens,
+    -- minimax,
+    -- matmult,
+    matmultV
+    -- coins,
+    -- nbody
+    -- sphere
+    -- gatesim,
+    -- transclos
     ]

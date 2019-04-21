@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 module Sphere.Sphere
     ( bseq
     , bstrat
@@ -412,7 +413,7 @@ bmpar winsize = runPar $ do
 brepa :: Int -> R.Array R.U DIM2 Vector
 brepa winsize = runIdentity $ R.computeP $ R.fromFunction (Z :. winsize :. winsize) f
     where
-        (firstray, scrnx, scrny) = camparams lookfrom lookat vup fov (fromIntegral winsize)
+        (!firstray, !scrnx, !scrny) = camparams lookfrom lookat vup fov (fromIntegral winsize)
         f :: DIM2 -> Vector
         f (Z :. i :. j) = tracepixel world testlights (fromIntegral i) (fromIntegral j) firstray scrnx scrny
 
