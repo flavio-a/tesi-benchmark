@@ -111,9 +111,24 @@ evalArrayStrat ga = res
         res = Vector.map (evalGateStrat res) ga
 
 evalGateStrat :: Vector Int -> Gate -> Int
-evalGateStrat res g@(Sum i j) = res ! j `par` res ! i `pseq` evalGate res g
-evalGateStrat res g@(Prod i j) = res ! j `par` res ! i `pseq` evalGate res g
-evalGateStrat res g@(Exp i j) = res ! j `par` res ! i `pseq` evalGate res g
+-- evalGateStrat res g@(Sum i j) = res ! j `par` res ! i `pseq` evalGate res g
+-- evalGateStrat res g@(Prod i j) = res ! j `par` res ! i `pseq` evalGate res g
+-- evalGateStrat res g@(Exp i j) = res ! j `par` res ! i `pseq` evalGate res g
+evalGateStrat res (Sum i j) = iv + jv `using` strat
+        where
+            iv = res ! i
+            jv = res ! j
+            strat v = do rpar jv; rseq iv; return v
+evalGateStrat res (Prod i j) = iv * jv `using` strat
+        where
+            iv = res ! i
+            jv = res ! j
+            strat v = do rpar jv; rseq iv; return v
+evalGateStrat res (Exp i j) = iv ^ jv `using` strat
+        where
+            iv = res ! i
+            jv = res ! j
+            strat v = do rpar jv; rseq iv; return v
 evalGateStrat res g = evalGate res g
 
 -- Second version: parallel map on the res array with rdeepseq. Isn't much

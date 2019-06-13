@@ -27,5 +27,5 @@ spec = do
     describe "seq" $ testSeq bseq
     -- bstrat can't return False, it just loops forever
     describe "strategies" $ forM_ (filter snd tests) (testFunOne bstrat)
-    -- describe "repa" $ testFun brepa
+    describe "repa" $ forM_ tests (testFunOne brepa)
     describe "monad par" $ forM_ tests (testFunOne bmpar)

@@ -48,7 +48,7 @@ payNstrat _ 0 _  = 1
 payNstrat _ _ [] = 0
 payNstrat th val ((c,q):coins)
     | c > val   = payNstrat th val coins
-    | otherwise = left `par` right `pseq` right + left
+    | otherwise = runEval $ (+) <$> rpar left <*> rseq right
     where
         left  = payNstrat (th - 1) (val - c) coins'
         right = payNstrat (th - 1) val coins

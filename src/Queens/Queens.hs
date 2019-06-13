@@ -46,7 +46,7 @@ bseq nq = length $ seqgen nq 0 []
 -- ================================ Strategies ================================
 {-
 Divide-and-conquer parallelized with threshold. Recursive function that at each
-call adds one queens to the partial chessboard it computed up to that point,
+call adds one queens to the partial chessboard is computed up to that point,
 then calls itself on each one of the extended partial chessboards. This
 recursive call happens in parallel until a certain threshold is reached, that
 is when a certain number of queens has already been placed. Beyond the

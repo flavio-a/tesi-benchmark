@@ -1,5 +1,4 @@
-{-# LANGUAGE FlexibleInstances, BangPatterns #-}
--- {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances, BangPatterns, ScopedTypeVariables #-}
 module Transclos.Transclos where
 
 import Control.Monad
@@ -11,6 +10,7 @@ import Control.Parallel
 import Control.Parallel.Strategies
 import Control.Monad.Par
 import qualified Data.Array.Repa as R
+import qualified Data.Array.Repa.Repr.Vector as R
 import Data.Array.Repa.Index
 import Data.Functor.Identity
 import Data.Vector.Unboxed.Base (Unbox)
@@ -96,19 +96,18 @@ bmpar r e seed = runPar $ transMpar seed seed
 
 -- =================================== Repa ===================================
 {-
-Can't just copy mpar because r :: a -> [a], so it can't be mapped over a Repa
-array.
-I gave up on this, also because in any case it wouldn't get performances much
-better than mpar version.
+More or less a copy of mpar.
 -}
--- brepa :: (Ord a, NFData a, Unbox a) => (a -> [a]) -> a -> [a] -> Bool
--- brepa r e seed = transRepa seed seed
---     where
---         transRepa tc s | null rest'  = False
---                        | e `elem` l' = True
---                        | otherwise   = transRepa (tc ++ l') rest'
---             where
---                 (comp, rest) = splitAt 10 s
---                 l = runIdentity $ R.computeP $ R.map r $ R.fromListUnboxed (Z :. length comp) comp
---                 l' = filter (`notElem` tc) $ concat $ R.toList l
---                 rest' = rest ++ l'
+brepa :: forall a . (Ord a, NFData a, Unbox a) => (a -> [a]) -> a -> [a] -> Bool
+brepa r e seed = transRepa seed seed
+    where
+        transRepa :: [a] -> [a] -> Bool
+        transRepa tc s | null rest'  = False
+                       | e `elem` l' = True
+                       | otherwise   = transRepa (tc ++ l') rest'
+            where
+                (comp, rest) = splitAt 10 s
+                l :: R.Array R.V DIM1 [a]
+                l = runIdentity $ R.computeP $ R.map r $ R.fromListUnboxed (Z :. length comp) comp
+                l' = filter (`notElem` tc) $ concat $ R.toList l
+                rest' = rest ++ l'
