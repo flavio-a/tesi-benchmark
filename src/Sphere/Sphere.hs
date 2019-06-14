@@ -12,6 +12,7 @@ import Control.Monad
 import System.Environment
 
 import Control.Parallel.Strategies
+import qualified Control.Seq as Seq
 import Control.Monad.Par
 import qualified Data.Array.Repa as R
 import Data.Array.Repa.Index
@@ -27,27 +28,36 @@ infinity = 1.0e+20
 type Vector = (Double, Double, Double)
 
 vecadd, vecsub, vecmult :: Vector -> Vector -> Vector
+{-# INLINE vecadd #-}
 vecadd  (x1,y1,z1) (x2,y2,z2) = (x1+x2, y1+y2, z1+z2)
+{-# INLINE vecsub #-}
 vecsub  (x1,y1,z1) (x2,y2,z2) = (x1-x2, y1-y2, z1-z2)
+{-# INLINE vecmult #-}
 vecmult (x1,y1,z1) (x2,y2,z2) = (x1*x2, y1*y2, z1*z2)
 
 vecsum :: [Vector] -> Vector
+{-# INLINE vecsum #-}
 vecsum = foldr vecadd (0,0,0)
 
 vecnorm :: Vector -> (Vector, Double)
+{-# INLINE vecnorm #-}
 vecnorm (x,y,z) = ((x/len, y/len, z/len), len)
     where len = sqrt (x^2 + y^2 + z^2)
 
 vecscale :: Vector -> Double -> Vector
+{-# INLINE vecscale #-}
 vecscale (x,y,z) a = (a*x, a*y, a*z)
 
 vecdot :: Vector -> Vector -> Double
+{-# INLINE vecdot #-}
 vecdot (x1,y1,z1) (x2,y2,z2) = x1*x2 + y1*y2 + z1*z2
 
 veccross :: Vector -> Vector -> Vector
+{-# INLINE veccross #-}
 veccross (x1,y1,z1) (x2,y2,z2) = (y1*z2-y2*z1, z1*x2-z2*x1, x1*y2-x2*y1)
 
 isZerovector :: Vector -> Bool
+{-# INLINE isZerovector #-}
 isZerovector (x,y,z) = x<epsilon && y<epsilon && z<epsilon
 
 --------------------------------------------------------------------------------
@@ -188,6 +198,7 @@ camparams lookfrom lookat vup fov winsize = (firstray, scrnx, scrny)
 
 tracepixel ::  [Sphere] -> [Light] -> Double -> Double -> Vector -> Vector
             -> Vector -> Vector
+{-# INLINE tracepixel #-}
 tracepixel spheres lights x y firstray scrnx scrny
                = if hit
                    then shade lights sp pos dir dist (1,1,1)
@@ -200,6 +211,7 @@ tracepixel spheres lights x y firstray scrnx scrny
 
 --------------------------------------------------------------------------------
 trace :: [Sphere] -> Vector -> Vector -> (Bool,Double,Sphere)
+{-# INLINE trace #-}
 trace spheres pos dir
            = if null dists
                then (False, infinity, head spheres)        -- missed all
@@ -225,6 +237,7 @@ trace spheres pos dir
 -- small.
 
 shade :: [Light] -> Sphere -> Vector -> Vector -> Double -> Vector -> Vector
+{-# INLINE shade #-}
 shade lights sp lookpos dir dist contrib = rcol
      where
        hitpos = vecadd lookpos (vecscale dir dist)
@@ -258,6 +271,7 @@ shade lights sp lookpos dir dist contrib = rcol
 -- Transmit a ray through an object
 transmitray :: [Light] -> Vector -> Vector -> Vector -> Double -> Vector
              -> Vector -> Vector -> (Bool, Vector)
+{-# INLINE transmitray #-}
 transmitray lights colour pos dir index intens contrib norm
        = if isZerovector newcontrib
            then (False, colour)        -- cutoff
@@ -274,6 +288,7 @@ transmitray lights colour pos dir index intens contrib norm
 -- Reflect a ray from an object
 reflectray :: Vector -> Vector -> [Light] -> Vector -> Vector -> Vector
             -> Vector
+{-# INLINE reflectray #-}
 reflectray pos newdir lights intens contrib colour
        = if isZerovector newcontrib
            then colour
@@ -291,6 +306,7 @@ reflectray pos newdir lights intens contrib colour
 -- outputs a new direction, and if total internal reflection occurred or not
 
 refractray :: Double -> Vector -> Vector -> (Bool,Vector)
+{-# INLINE refractray #-}
 refractray newindex olddir innorm
                = if disc < 0
                    then (True, (0,0,0))        -- total internal reflection
@@ -310,6 +326,7 @@ refractray newindex olddir innorm
 -- contribution to the object's colour
 
 lightray :: Light -> Vector -> Vector -> Vector -> [Surfspec] -> Vector
+{-# INLINE lightray #-}
 lightray l pos norm refl surf =
       let
         (ldir, dist) = lightdirection l pos
@@ -358,6 +375,7 @@ shadowed pos dir lcolour = (is_hit, lcolour) -- if not is_hit
 -- Assumes direction vector is normalised
 
 sphereintersect :: Vector -> Vector -> Sphere -> (Bool,Double)
+{-# INLINE sphereintersect #-}
 sphereintersect pos dir sp | disc < 0 = (False, 0)        -- imaginary solns only
                            | slo < 0 = if shi < 0
                                               then (False, 0)
@@ -393,7 +411,7 @@ ray winsize = [ [ f i j | j <- [0..winsize-1] ] | i <- [0..winsize-1] ]
 -- ================================ Strategies ================================
 -- Without clustering it had bad performances (as fast as sequential)
 bstrat :: Int -> [[Vector]]
-bstrat n = ray n `using` parList (evalList rdeepseq)
+bstrat n = ray n `using` parList (evalSeq (Seq.seqList Seq.rdeepseq))
 -- bstrat n = ray n `using` parList (parList rdeepseq)
 
 -- ================================ Monad Par ================================

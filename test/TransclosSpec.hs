@@ -14,10 +14,10 @@ tripUncurry :: (a -> b -> c -> d) -> (a, b, c) -> d
 tripUncurry f (a, b, c) = f a b c
 
 tests :: [((Int -> [Int], Int, [Int]), Bool)]
-tests = zip inputs $ map (tripUncurry bseq) inputs
+tests = zip inputs outputs -- $ map (tripUncurry bseq) inputs
 
 testSeq :: ((Int -> [Int]) -> Int -> [Int] -> Bool) -> Spec
-testSeq f = forM_ (zip inputs outputs) (\(i, o) -> it (show o) $ tripUncurry f i `shouldBe` o)
+testSeq f = forM_ (filter snd tests) (\(i, o) -> it (show o) $ tripUncurry f i `shouldBe` o)
 
 testFunOne :: ((Int -> [Int]) -> Int -> [Int] -> Bool) -> ((Int -> [Int], Int, [Int]), Bool) -> Spec
 testFunOne f (i, o) = it (show o) $ tripUncurry f i `shouldBe` o

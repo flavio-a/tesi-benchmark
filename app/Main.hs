@@ -71,7 +71,7 @@ coins = bgroup ("coins - " ++ show val)
 transclos = bgroup ("transclos - " ++ show val)
     [ bench "seq" $ nf (Transclos.bseq r val) seed
     , bench "strat" $ nf (Transclos.bstrat r val) seed
-    -- , bench "repa" $ nf (Transclos.brepa r val) seed
+    , bench "repa" $ nf (Transclos.brepa r val) seed
     , bench "mpar" $ nf (Transclos.bmpar r val) seed
     ]
     where
@@ -115,14 +115,15 @@ gatesim = bgroup ("gatesim - " ++ show num ++ "E" ++ show e)
         -- gatesrepa = vectorToRepa gates
 
 main :: IO ()
-main = defaultMain [
-    -- queens,
-    -- minimax,
-    -- matmult,
-    matmultV
-    -- coins,
-    -- nbody
-    -- sphere
-    -- gatesim,
+main = defaultMain [  ]
+-- main = defaultMain [
+--     queens,
+--     minimax,
+--     matmult,
+--     matmultV,
+--     coins,
+--     nbody,
+--     sphere,
+--     gatesim,
     -- transclos
-    ]
+    -- ]

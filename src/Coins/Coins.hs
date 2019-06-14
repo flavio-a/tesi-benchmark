@@ -94,15 +94,18 @@ type CoinState = (Int, Int, Int)
 -- Given the original set of coins and a CoinState computes the actual set of
 -- coins
 actualcoins :: [(Int, Int)] -> CoinState -> [(Int, Int)]
+{-# INLINE actualcoins #-}
 actualcoins coins (_, idx, q) = rephead q (drop idx coins)
     where
         rephead :: Int -> [(a, Int)] -> [(a, Int)]
+        {-# INLINE rephead #-}
         rephead _ [] = []
         rephead n ((a, q):xs) = (a, q - n):xs
 
 -- Sequential function for evaluation of a tail: from a CoinState returns the
 -- number of ways to pay the remaining value with remaining coins
 payNstate :: [(Int, Int)] -> CoinState -> Int
+{-# INLINE payNstate #-}
 payNstate coins cs@(val, _, _) = payN val $ actualcoins coins cs
 
 -- Computes the set of states after th steps, that are tails' starting points,

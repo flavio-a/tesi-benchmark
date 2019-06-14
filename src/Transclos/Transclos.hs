@@ -24,6 +24,7 @@ compn n f a | n <= 0    = a
                     fa = f a
 
 sleep :: Int -> Int
+{-# INLINE sleep #-}
 sleep !n = compn n (+1) 0
 
 -- Given that for parallelism to be useful a relation should be expensive these
@@ -31,10 +32,12 @@ sleep !n = compn n (+1) 0
 
 -- n R m iff m = n + 1 and n < b
 r1 :: Int -> Int -> [Int]
+{-# INLINE r1 #-}
 r1 b n | n < b     = sleep n `seq` [n+1]
        | otherwise = sleep b `seq` []
 
 r2 :: Int -> [Int]
+{-# INLINE r2 #-}
 r2 n = sleep n `pseq` [n+1..n+11]
 
 -- Concat a list of lists, then removes duplicates via sorting.
@@ -52,7 +55,8 @@ transcl r xs = xs'
                         unionSort [ r y | y <- take (n-m) (drop m xs') ]
 
 bseq :: (Ord a) => (a -> [a]) -> a -> [a] -> Bool
-bseq r e seed = e `elem` transcl r seed
+-- bseq r e seed = e `elem` transcl r seed
+bseq r e seed = e `elem` concat (transclNested r seed)
 
 -- ================================ Strategies ================================
 transclNested :: (Eq a) => (a -> [a]) -> [a] -> [[a]]

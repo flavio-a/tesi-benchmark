@@ -25,18 +25,21 @@ type Chessboard = [Int]
 -- Check if a position is safe given a partial chessboard
 -- TODO: tail-recursive this
 safe :: Int -> Int -> Chessboard -> Bool
+{-# INLINE safe #-}
 safe x d []    = True
 safe x d (q:l) = x /= q && x /= q+d && x /= q-d && safe x (d+1) l
 
 -- Takes a list of partial chessboards and extends each one of them with all
 -- possible positions. First parameter is the total size of the chessboard
 gen :: Int -> [Chessboard] -> [Chessboard]
+{-# INLINE gen #-}
 gen nq bs = [ q:b | b <- bs, q <- [1..nq], safe q 1 b ]
 
 -- Sequential computation: given a partial chessboard (the tail's starting
 -- point) computes all the possible chessboards obtained adding (nq - n) queens
 -- to that chessboard
 seqgen :: Int -> Int -> Chessboard -> [Chessboard]
+{-# INLINE seqgen #-}
 seqgen nq n b = iterate (gen nq) [b] !! (nq - n)
 
 -- ================================ Sequential ================================
@@ -97,6 +100,7 @@ brepa nq = runIdentity result
     where
     threshold = 3
     lengen :: [Int] -> Int
+    {-# INLINE lengen #-}
     lengen x = length $ seqgen nq threshold x
     -- Apply three steps sequentially
     seqcbs = seqgen nq (nq - threshold) [] :: [Chessboard]
