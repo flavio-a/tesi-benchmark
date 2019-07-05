@@ -93,7 +93,7 @@ bseq m1 m2 = multMatricesTr m1 (transposeV m2)
 -- ================================ Strategies ================================
 -- Clustering in blocks. Better performances than rows/colums clustering
 bstrat :: MatrixV -> MatrixV -> Matrix
-bstrat m1 m2 = multMatricesTr m1 (transposeV m2) `using` blockStrat 20
+bstrat m1 m2 = bseq m1 m2 `using` blockStrat 20
     where
         blockStrat :: Int -> Strategy Matrix
         blockStrat c matrix = mergeBlocks <$> parList (parList rdeepseq) blocks

@@ -411,7 +411,7 @@ ray winsize = [ [ f i j | j <- [0..winsize-1] ] | i <- [0..winsize-1] ]
 -- ================================ Strategies ================================
 -- Without clustering it had bad performances (as fast as sequential)
 bstrat :: Int -> [[Vector]]
-bstrat n = ray n `using` parList (evalSeq (Seq.seqList Seq.rdeepseq))
+bstrat n = bseq n `using` parList (evalSeq (Seq.seqList Seq.rdeepseq))
 -- bstrat n = ray n `using` parList (parList rdeepseq)
 
 -- ================================ Monad Par ================================

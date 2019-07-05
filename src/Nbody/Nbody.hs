@@ -102,9 +102,9 @@ bseq n = map (computeIndexed initVecs) [0..n-1]
 -- ================================ Strategies ================================
 -- Parallel map chunking computations
 bstrat :: Int -> [Float3D]
-bstrat n = map (computeIndexed initVecs) [0..n-1] `using` parListChunk chunk rdeepseq
+-- bstrat n = map (computeIndexed initVecs) [0..n-1] `using` parListChunk chunk rdeepseq
+bstrat n = bseq n `using` parListChunk chunk rdeepseq
     where
-        !initVecs = genInitVecs n
         chunk = numCapabilities * 10
 
 -- ================================ Monad Par ================================

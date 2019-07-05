@@ -38,6 +38,7 @@ indexes in the array of other gates whose output is connected to that input.
 -}
 type Idx = Int
 data Gate = Input Int | Sum Idx Idx | Prod Idx Idx | Exp Idx Idx | Sleep Idx
+          | Min Idx Idx
     -- deriving (Show,Generic,NFData)
 
 -- Product "lazy" in its first argument, ie. doesn't evaluate the second if the
@@ -65,6 +66,7 @@ evalGate res (Sleep i) = sleep (res ! i)
 evalGate res (Sum i j) = (res ! i) + (res ! j)
 evalGate res (Prod i j) = (res ! i) -* (res ! j)
 evalGate res (Exp i j) = (res ! i) ^ (res ! j)
+evalGate res (Min i j) = min (res ! i) (res ! j)
 
 {-
 A gate array is an array of gates.
@@ -99,7 +101,7 @@ evalArray ga = res
 
 -- ================================ Strategies ================================
 bstrat :: GateArray -> Idx -> Int
-bstrat ga n = evalArrayStrat2 ga ! (length ga - n - 1)
+bstrat ga n = evalArrayStrat ga ! (length ga - n - 1)
 
 -- Compute in parallel using strategies: each time a gate has two inputs spark
 -- the computation of one of them.
@@ -129,22 +131,23 @@ evalGateStrat res (Exp i j) = iv ^ jv `using` strat
             iv = res ! i
             jv = res ! j
             strat v = do rpar jv; rseq iv; return v
+evalGateStrat res (Min i j) = min iv jv `using` strat
+        where
+            iv = res ! i
+            jv = res ! j
+            strat v = do rpar jv; rseq iv; return v
 evalGateStrat res g = evalGate res g
 
 -- Second version: parallel map on the res array with rdeepseq. Isn't much
 -- better than sequential version (and depends on schedule)
 evalArrayStrat2 :: GateArray -> Vector Int
-evalArrayStrat2 ga = res `using` parTraversable rdeepseq
-    where
-        res = Vector.map (evalGate res) ga
+evalArrayStrat2 ga = evalArray ga `using` parTraversable rdeepseq
 
 -- Third version: parallel map on the res array, but only reduces to whnf.
 -- Shouldn't get much more parallelism than strat2 because the computationally
 -- expensives stages are only sleeps, that are strict in their argument.
 evalArrayStrat3 :: GateArray -> Vector Int
-evalArrayStrat3 ga = res `using` parTraversable rseq
-    where
-        res = Vector.map (evalGate res) ga
+evalArrayStrat3 ga = evalArray ga `using` parTraversable rseq
 
 -- ================================ Monad Par ================================
 -- Much better parallelism but always evaluates the whole array, even though
@@ -162,6 +165,7 @@ evalGateMpar res (iv, Sleep i) = get (res ! i) >>= (put iv . sleep)
 evalGateMpar res (iv, Sum i j) = liftM2 (+) (get (res ! i)) (get (res ! j)) >>= put iv
 evalGateMpar res (iv, Prod i j) = liftM2 (-*) (get (res ! i)) (get (res ! j)) >>= put iv
 evalGateMpar res (iv, Exp i j) = liftM2 (^) (get (res ! i)) (get (res ! j)) >>= put iv
+evalGateMpar res (iv, Min i j) = liftM2 min (get (res ! i)) (get (res ! j)) >>= put iv
 
 -- =================================== Repa ===================================
 {-

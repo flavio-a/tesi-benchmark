@@ -107,12 +107,16 @@ gatesim = bgroup ("gatesim - " ++ show num ++ "E" ++ show e)
     where
         num = 48 :: Int
         e = 7 :: Int
-        eval = 10 ^ e
-        input = toInput [eval .. eval + num - 1]
+        expe = 10 ^ e
+        input = toInput [expe .. expe + num - 1]
         sleeps = map Sleep [0 .. num - 1]
         sums = take (num - 1) $ zipWith Sum [num, num + 2..] [num + 1, num + 3..]
         gates = fromList $ input ++ sleeps ++ sums
         -- gatesrepa = vectorToRepa gates
+        -- diamond :: Int -> [Gate]
+        -- diamond i = [Sleep i, Sleep i, Sleep i, Sum (i + 1) (i + 2),
+        --              Min (i + 3) (i + 2), Sum (i + 4) (i + 2), Min (i + 6) (i + 5)]
+        -- gates = fromList $ [Input expe] ++ concatMap diamond [0, 7 .. num]
 
 main :: IO ()
 main = defaultMain [  ]
@@ -123,7 +127,7 @@ main = defaultMain [  ]
 --     matmultV,
 --     coins,
 --     nbody,
---     sphere,
+--     sphere
 --     gatesim,
-    -- transclos
-    -- ]
+--     transclos
+--     ]
